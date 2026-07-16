@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: kostagih-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kostagih_user
+      POSTGRES_PASSWORD: kostagih_dev_password
+      POSTGRES_DB: kostagih_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - kostagih_pgdata:/var/lib/postgresql/data
+
+volumes:
+  kostagih_pgdata:
