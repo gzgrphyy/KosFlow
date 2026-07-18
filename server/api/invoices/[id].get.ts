@@ -47,6 +47,8 @@ export default defineEventHandler(async (event) => {
         payments: invoice.payments.map(p => ({
             id: p.id,
             amount: Number(p.amount),
+            method: p.method,
+            referenceNo: p.referenceNo,
             proofUrl: p.proofUrl,
             paymentDate: p.paymentDate,
             status: p.status,

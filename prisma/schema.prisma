@@ -35,6 +35,14 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  QRIS
+  E_WALLET
+  LAINNYA
+}
+
 model User {
   id           String   @id @default(uuid())
   name         String
@@ -126,6 +134,8 @@ model Payment {
   id             String        @id @default(uuid())
   invoiceId      String
   amount         Decimal       @db.Decimal(12, 2)
+  method         PaymentMethod?
+  referenceNo    String?
   proofUrl       String
   paymentDate    DateTime
   status         PaymentStatus @default(PENDING)

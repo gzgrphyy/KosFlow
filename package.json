@@ -31,6 +31,7 @@
     "@tiptap/vue-3": "^3.28.0",
     "@vueuse/motion": "^3.0.3",
     "argon2": "^0.43.1",
+    "exceljs": "^4.4.0",
     "nuxt": "^4.4.8",
     "nuxt-auth-utils": "^0.5.29",
     "tailwindcss": "^4.3.3",

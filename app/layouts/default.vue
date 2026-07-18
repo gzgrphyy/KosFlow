@@ -61,6 +61,7 @@ const navLinks = [
   { to: '/rooms', label: 'Kamar' },
   { to: '/tenants', label: 'Penyewa' },
   { to: '/invoices', label: 'Tagihan' },
+  { to: '/payments', label: 'Pembayaran' },
 ]
 
 function isActive(to) {
