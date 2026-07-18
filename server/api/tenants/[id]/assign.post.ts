@@ -1,6 +1,5 @@
-// server/api/tenants/[id].assign.post.ts
+// server/api/tenants/[id]/assign.post.ts
 import { z } from 'zod'
-import { tenantIdParamSchema } from '../../utils/validation/tenant'
 
 const assignSchema = z.object({
     roomId: z.string().min(1, 'ID kamar diperlukan'),
@@ -10,11 +9,9 @@ const assignSchema = z.object({
 export default defineEventHandler(async (event) => {
     const user = await requireAdminOrOwner(event)
 
-    const params = tenantIdParamSchema.safeParse({ id: getRouterParam(event, 'id') })
-    if (!params.success) {
-        throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
-    }
-    const { id: tenantId } = params.data
+    const id = event.context.params?.id
+    if (!id) throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
+    const tenantId = id
 
     const body = await readBody(event)
     const parsed = assignSchema.safeParse(body)

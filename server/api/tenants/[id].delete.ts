@@ -1,14 +1,10 @@
 // server/api/tenants/[id].delete.ts
-import { tenantIdParamSchema } from '../../utils/validation/tenant'
 
 export default defineEventHandler(async (event) => {
     const user = await requireOwner(event)
 
-    const params = tenantIdParamSchema.safeParse({ id: getRouterParam(event, 'id') })
-    if (!params.success) {
-        throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
-    }
-    const { id } = params.data
+    const id = event.context.params?.id
+    if (!id) throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
 
     const existing = await prisma.tenant.findUnique({ where: { id } })
     if (!existing) {
@@ -27,7 +23,30 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    await prisma.tenant.delete({ where: { id } })
+    // Hapus semua data terkait dalam transaksi (cascade manual)
+    await prisma.$transaction(async (tx) => {
+        const tenancyIds = await tx.tenancy.findMany({
+            where: { tenantId: id },
+            select: { id: true },
+        }).then(rows => rows.map(r => r.id))
+
+        if (tenancyIds.length > 0) {
+            const invoiceIds = await tx.invoice.findMany({
+                where: { tenancyId: { in: tenancyIds } },
+                select: { id: true },
+            }).then(rows => rows.map(r => r.id))
+
+            if (invoiceIds.length > 0) {
+                await tx.payment.deleteMany({ where: { invoiceId: { in: invoiceIds } } })
+                await tx.invoiceItem.deleteMany({ where: { invoiceId: { in: invoiceIds } } })
+                await tx.invoice.deleteMany({ where: { id: { in: invoiceIds } } })
+            }
+
+            await tx.tenancy.deleteMany({ where: { id: { in: tenancyIds } } })
+        }
+
+        await tx.tenant.delete({ where: { id } })
+    })
 
     await writeAuditLog({
         userId: user.id,

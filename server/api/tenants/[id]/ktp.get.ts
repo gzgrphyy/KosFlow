@@ -1,16 +1,12 @@
-// server/api/tenants/[id].ktp.get.ts
+// server/api/tenants/[id]/ktp.get.ts
 // Endpoint khusus untuk melihat nomor KTP asli.
 // Setiap akses WAJIB dicatat di audit log.
-import { tenantIdParamSchema } from '../../utils/validation/tenant'
 
 export default defineEventHandler(async (event) => {
     const user = await requireAdminOrOwner(event)
 
-    const params = tenantIdParamSchema.safeParse({ id: getRouterParam(event, 'id') })
-    if (!params.success) {
-        throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
-    }
-    const { id } = params.data
+    const id = event.context.params?.id
+    if (!id) throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
 
     const tenant = await prisma.tenant.findUnique({
         where: { id },

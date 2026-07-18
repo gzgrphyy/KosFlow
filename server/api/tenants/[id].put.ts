@@ -1,14 +1,11 @@
 // server/api/tenants/[id].put.ts
-import { updateTenantSchema, tenantIdParamSchema } from '../../utils/validation/tenant'
+import { updateTenantSchema } from '../../utils/validation/tenant'
 
 export default defineEventHandler(async (event) => {
     const user = await requireAdminOrOwner(event)
 
-    const params = tenantIdParamSchema.safeParse({ id: getRouterParam(event, 'id') })
-    if (!params.success) {
-        throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
-    }
-    const { id } = params.data
+    const id = event.context.params?.id
+    if (!id) throw createError({ statusCode: 400, statusMessage: 'ID tenant tidak valid' })
 
     const body = await readBody(event)
     const parsed = updateTenantSchema.safeParse(body)
