@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 transition-colors">
+  <UApp>
+    <div class="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 transition-colors">
     <nav v-if="loggedIn" class="sticky top-0 z-50 glass">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14 items-center">
@@ -28,11 +29,9 @@
               @click="toggleDark"
             />
             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ user?.name }}</span>
-            <TooltipProvider>
-              <UTooltip text="Logout" :delay-duration="300">
+                    <UTooltip text="Logout" :delay-duration="300">
                 <UButton icon="heroicons:arrow-right-start-on-rectangle-20-solid" color="gray" variant="ghost" size="sm" @click="logout" />
               </UTooltip>
-            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -41,10 +40,10 @@
       <slot />
     </main>
   </div>
+  </UApp>
 </template>
 
 <script setup>
-import { TooltipProvider } from 'reka-ui'
 
 const { loggedIn, user, clear } = useUserSession()
 const route = useRoute()

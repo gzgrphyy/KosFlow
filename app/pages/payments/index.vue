@@ -378,7 +378,8 @@ const payments = computed(() => response.value?.data || [])
 const pagination = computed(() => response.value?.pagination || { page: 1, pageSize: 20, total: 0, totalPages: 0 })
 const stats = computed(() => response.value?.stats || { totalTransactions: 0, totalRevenue: 0, thisMonthRevenue: 0, todayRevenue: 0 })
 
-const { total, totalPages } = computed(() => pagination.value)
+const total = computed(() => pagination.value.total)
+const totalPages = computed(() => pagination.value.totalPages)
 
 const loadingStats = computed(() => loading.value && !response.value)
 
@@ -473,6 +474,9 @@ const detail = ref(null)
 
 watch(drawerOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 
 async function openDetail(id) {
