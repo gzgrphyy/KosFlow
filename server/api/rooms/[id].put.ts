@@ -9,7 +9,7 @@ const updateRoomSchema = z.object({
 export default defineEventHandler(async (event) => {
   const user = await requireAdminOrOwner(event)
 
-  const id = getRouterParam(event, 'id')
+  const id = event.context.params?.id
   if (!id) throw createError({ statusCode: 400, statusMessage: 'ID kamar diperlukan' })
 
   const body = await readBody(event)

@@ -1,4 +1,4 @@
-// server/api/invoices/[id].status.patch.ts
+// server/api/invoices/[id]/status.patch.ts
 import { z } from 'zod'
 
 const updateStatusSchema = z.object({
@@ -8,7 +8,7 @@ const updateStatusSchema = z.object({
 export default defineEventHandler(async (event) => {
     const user = await requireAdminOrOwner(event)
 
-    const id = getRouterParam(event, 'id')
+    const id = event.context.params?.id
     if (!id) throw createError({ statusCode: 400, statusMessage: 'ID invoice diperlukan' })
 
     const body = await readBody(event)

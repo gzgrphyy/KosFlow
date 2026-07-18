@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   await requireAuth(event)
 
-  const id = getRouterParam(event, 'id')
+  const id = event.context.params?.id
   if (!id) throw createError({ statusCode: 400, statusMessage: 'ID kamar diperlukan' })
 
   const room = await prisma.room.findUnique({ where: { id } })

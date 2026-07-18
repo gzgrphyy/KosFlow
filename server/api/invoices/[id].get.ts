@@ -2,7 +2,7 @@
 export default defineEventHandler(async (event) => {
     await requireAuth(event)
 
-    const id = getRouterParam(event, 'id')
+    const id = event.context.params?.id
     if (!id) throw createError({ statusCode: 400, statusMessage: 'ID invoice diperlukan' })
 
     const invoice = await prisma.invoice.findUnique({
