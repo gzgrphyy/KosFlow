@@ -57,6 +57,8 @@ export default defineEventHandler(async (event) => {
       let invoiceStatus: string
       if (newTotalPaid >= totalInvoice) {
         invoiceStatus = 'LUNAS'
+      } else if (newTotalPaid > 0) {
+        invoiceStatus = 'SEBAGIAN'
       } else {
         invoiceStatus = 'BELUM_LUNAS'
       }

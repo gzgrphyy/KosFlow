@@ -104,11 +104,11 @@ const statusFilters = [
 ]
 
 function statusLabel(s) {
-  return { BELUM_LUNAS: 'Belum Lunas', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
+  return { BELUM_LUNAS: 'Belum Lunas', SEBAGIAN: 'Sebagian', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
 }
 
 function statusColor(s) {
-  return { BELUM_LUNAS: 'warning', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
+  return { BELUM_LUNAS: 'warning', SEBAGIAN: 'neutral', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
 }
 
 function formatDate(dateStr) {

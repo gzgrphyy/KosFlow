@@ -61,8 +61,41 @@
           </tfoot>
         </table>
 
+        <!-- Payment Summary -->
+        <div class="border-t border-gray-100 dark:border-gray-800 pt-5 mt-5 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Total Dibayar</span>
+            <span class="font-semibold text-green-600 dark:text-green-400">
+              Rp {{ totalPaid.toLocaleString('id-ID') }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Sisa Tagihan</span>
+            <span class="font-semibold" :class="remainingAmount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'">
+              Rp {{ remainingAmount.toLocaleString('id-ID') }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Catat Pembayaran Button -->
+        <div v-if="invoice?.status !== 'LUNAS'" class="mt-5">
+          <UButton color="primary" variant="solid" size="md" @click="paymentPanelOpen = true" class="w-full">
+            <Icon name="heroicons:plus-20-solid" class="w-4 h-4" />
+            Catat Pembayaran
+          </UButton>
+        </div>
+        <div v-else class="mt-5">
+          <UButton color="green" variant="soft" size="md" disabled class="w-full">
+            <Icon name="heroicons:check-circle-20-solid" class="w-4 h-4" />
+            Tagihan Lunas
+          </UButton>
+        </div>
+
         <div class="border-t border-gray-100 dark:border-gray-800 pt-5 mt-5">
-          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Update Status</p>
+          <div class="flex items-center gap-2 mb-3">
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Update Status</p>
+            <span class="text-[10px] text-gray-400 dark:text-gray-500 italic">(override manual)</span>
+          </div>
           <div class="flex gap-3 items-center">
             <USelect v-model="newStatus" :items="statusOptions" class="w-44" />
             <UButton :loading="updatingStatus" :disabled="newStatus === invoice?.status" @click="handleUpdateStatus" color="primary">
@@ -91,12 +124,22 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="font-semibold text-gray-900 dark:text-white">Rp {{ Number(p.amount).toLocaleString('id-ID') }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ formatDate(p.paymentDate) }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  {{ formatDate(p.paymentDate) }}
+                  <span class="text-gray-400">·</span>
+                  {{ methodLabel(p.method) }}
+                </p>
+                <p v-if="p.referenceNo" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-mono">Ref: {{ p.referenceNo }}</p>
                 <p v-if="p.notes" class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ p.notes }}</p>
               </div>
-              <UBadge :color="paymentColor(p.status)" variant="subtle" size="sm">
-                {{ paymentLabel(p.status) }}
-              </UBadge>
+              <div class="flex flex-col items-end gap-1.5">
+                <UBadge :color="paymentColor(p.status)" variant="subtle" size="sm">
+                  {{ paymentLabel(p.status) }}
+                </UBadge>
+                <a v-if="p.proofUrl" :href="p.proofUrl" target="_blank" class="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400">
+                  Lihat Bukti
+                </a>
+              </div>
             </div>
             <div v-if="p.verifiedBy" class="text-xs text-gray-400 dark:text-gray-500 mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
               Diverifikasi oleh {{ p.verifiedBy.name }} pada {{ formatDate(p.verifiedAt) }}
@@ -104,6 +147,80 @@
           </div>
         </div>
       </UCard>
+
+      <!-- Catat Pembayaran Modal -->
+      <div v-if="paymentPanelOpen">
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Catat Pembayaran</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 font-mono">
+            Invoice #{{ invoice?.id?.slice(0, 8) }} — {{ invoice?.tenant?.fullName }}
+          </p>
+
+          <div class="space-y-5">
+            <UFormField label="Jumlah Dibayar" required>
+              <input
+                v-model="paymentForm.amount"
+                type="text"
+                inputmode="numeric"
+                placeholder="0"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+              />
+            </UFormField>
+
+            <UFormField label="Metode Bayar" required>
+              <select
+                v-model="paymentForm.method"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+              >
+                <option value="" disabled>Pilih metode</option>
+                <option value="CASH">Tunai</option>
+                <option value="TRANSFER">Transfer</option>
+                <option value="QRIS">QRIS</option>
+                <option value="E_WALLET">E-Wallet</option>
+                <option value="LAINNYA">Lainnya</option>
+              </select>
+            </UFormField>
+
+            <UFormField label="Tanggal Bayar" required>
+              <input
+                v-model="paymentForm.paymentDate"
+                type="date"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+              />
+            </UFormField>
+
+            <UFormField label="Upload Bukti">
+              <label class="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <Icon name="heroicons:cloud-arrow-up-20-solid" class="w-5 h-5 text-gray-400 shrink-0" />
+                <span class="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
+                  {{ paymentForm.proofFile ? paymentForm.proofFile.name : 'Pilih file...' }}
+                </span>
+                <input type="file" accept="image/*,.pdf" class="hidden" @change="onFileChange" />
+              </label>
+              <p class="text-xs text-gray-400 mt-1">Opsional (disarankan untuk non-tunai)</p>
+            </UFormField>
+
+            <UFormField label="Catatan">
+              <textarea
+                v-model="paymentForm.notes"
+                placeholder="Keterangan tambahan..."
+                maxlength="500"
+                rows="3"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none resize-none"
+              ></textarea>
+            </UFormField>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 mt-6">
+            <UButton color="gray" variant="ghost" @click="closePaymentPanel">Batal</UButton>
+            <UButton :loading="submittingPayment" color="primary" @click="handleSubmitPayment">
+              {{ submittingPayment ? 'Menyimpan...' : 'Simpan Pembayaran' }}
+            </UButton>
+          </div>
+
+          <p v-if="paymentError" class="text-sm text-red-600 dark:text-red-400 mt-4">{{ paymentError }}</p>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -122,6 +239,7 @@ const statusSuccess = ref('')
 
 const statusOptions = [
   { label: 'Belum Lunas', value: 'BELUM_LUNAS' },
+  { label: 'Sebagian', value: 'SEBAGIAN' },
   { label: 'Lunas', value: 'LUNAS' },
   { label: 'Telat', value: 'TELAT' },
 ]
@@ -167,12 +285,22 @@ function formatDate(dateStr) {
   })
 }
 
+const totalPaid = computed(() =>
+  (invoice.value?.payments || [])
+    .filter(p => p.status === 'VERIFIED')
+    .reduce((s, p) => s + Number(p.amount), 0)
+)
+
+const remainingAmount = computed(() =>
+  Math.max(0, (invoice.value?.total || 0) - totalPaid.value)
+)
+
 function statusLabel(s) {
-  return { BELUM_LUNAS: 'Belum Lunas', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
+  return { BELUM_LUNAS: 'Belum Lunas', SEBAGIAN: 'Sebagian', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
 }
 
 function statusColor(s) {
-  return { BELUM_LUNAS: 'warning', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
+  return { BELUM_LUNAS: 'warning', SEBAGIAN: 'neutral', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
 }
 
 function paymentLabel(s) {
@@ -182,4 +310,75 @@ function paymentLabel(s) {
 function paymentColor(s) {
   return { PENDING: 'warning', VERIFIED: 'success', REJECTED: 'error' }[s] || 'neutral'
 }
+
+function methodLabel(m) {
+  return { CASH: 'Tunai', TRANSFER: 'Transfer', QRIS: 'QRIS', E_WALLET: 'E-Wallet', LAINNYA: 'Lainnya' }[m] || m || '—'
+}
+
+// Payment Modal
+const paymentPanelOpen = ref(false)
+const submittingPayment = ref(false)
+const paymentError = ref('')
+
+const todayStr = new Date().toISOString().slice(0, 10)
+
+const paymentForm = reactive({
+  amount: '',
+  method: '',
+  paymentDate: todayStr,
+  proofFile: null,
+  notes: '',
+})
+
+function onFileChange(event) {
+  paymentForm.proofFile = event.target.files?.[0] || null
+}
+
+function closePaymentPanel() {
+  paymentPanelOpen.value = false
+  paymentError.value = ''
+  paymentForm.amount = ''
+  paymentForm.method = ''
+  paymentForm.paymentDate = todayStr
+  paymentForm.proofFile = null
+  paymentForm.notes = ''
+}
+
+async function handleSubmitPayment() {
+  paymentError.value = ''
+  const amountNum = Number(paymentForm.amount)
+  if (!amountNum || amountNum <= 0) {
+    paymentError.value = 'Jumlah dibayar harus lebih dari 0'
+    return
+  }
+  if (!paymentForm.method) {
+    paymentError.value = 'Pilih metode pembayaran'
+    return
+  }
+
+  submittingPayment.value = true
+  try {
+    const fd = new FormData()
+    fd.append('invoiceId', id)
+    fd.append('amount', paymentForm.amount)
+    fd.append('method', paymentForm.method)
+    fd.append('paymentDate', paymentForm.paymentDate)
+    if (paymentForm.notes) fd.append('notes', paymentForm.notes)
+    if (paymentForm.proofFile) fd.append('proof', paymentForm.proofFile)
+
+    await $fetch('/api/payments/upload', {
+      method: 'POST',
+      body: fd,
+    })
+
+    closePaymentPanel()
+    await loadInvoice()
+  } catch (e) {
+    paymentError.value = e.data?.statusMessage || 'Gagal mencatat pembayaran'
+  } finally {
+    submittingPayment.value = false
+  }
+}
 </script>
+
+

@@ -36,7 +36,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const parsed = uploadSchema.safeParse(textFields)
+  const parsed = uploadSchema.safeParse({
+    ...textFields,
+    amount: textFields.amount ? Number(textFields.amount) : undefined,
+    referenceNo: textFields.referenceNo || undefined,
+    notes: textFields.notes || undefined,
+  })
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: 'Input tidak valid', data: parsed.error.flatten() })
   }
@@ -45,6 +50,7 @@ export default defineEventHandler(async (event) => {
     where: { id: parsed.data.invoiceId },
     include: {
       tenancy: { include: { tenant: { select: { fullName: true } }, room: { select: { roomNumber: true } } } },
+      items: { select: { amount: true } },
     },
   })
 
@@ -59,26 +65,55 @@ export default defineEventHandler(async (event) => {
     const filePath = `public/uploads/payments/${fileName}`
     await writeFile(filePath, fileBuffer)
     proofUrl = `/uploads/payments/${fileName}`
-  } else {
-    throw createError({ statusCode: 400, statusMessage: 'File bukti pembayaran wajib diunggah' })
   }
 
-  const payment = await prisma.payment.create({
-    data: {
-      invoiceId: parsed.data.invoiceId,
-      amount: parsed.data.amount,
-      method: parsed.data.method as any,
-      referenceNo: parsed.data.referenceNo,
-      proofUrl,
-      paymentDate: new Date(parsed.data.paymentDate),
-      status: 'PENDING',
-      notes: parsed.data.notes,
-    },
+  const isCash = parsed.data.method === 'CASH'
+
+  const payment = await prisma.$transaction(async (tx) => {
+    const created = await tx.payment.create({
+      data: {
+        invoiceId: parsed.data.invoiceId,
+        amount: parsed.data.amount,
+        method: parsed.data.method as any,
+        referenceNo: parsed.data.referenceNo,
+        proofUrl,
+        paymentDate: new Date(parsed.data.paymentDate),
+        status: isCash ? 'VERIFIED' : 'PENDING',
+        verifiedById: isCash ? user.id : undefined,
+        verifiedAt: isCash ? new Date() : undefined,
+        notes: parsed.data.notes,
+      },
+    })
+
+    if (isCash) {
+      const allVerified = await tx.payment.findMany({
+        where: { invoiceId: parsed.data.invoiceId, status: 'VERIFIED' },
+        select: { amount: true },
+      })
+      const totalInvoice = invoice.items.reduce((s, i) => s + Number(i.amount), 0)
+      const totalPaid = allVerified.reduce((s, p) => s + Number(p.amount), 0)
+
+      let invoiceStatus: string
+      if (totalPaid >= totalInvoice) {
+        invoiceStatus = 'LUNAS'
+      } else if (totalPaid > 0) {
+        invoiceStatus = 'SEBAGIAN'
+      } else {
+        invoiceStatus = 'BELUM_LUNAS'
+      }
+
+      await tx.invoice.update({
+        where: { id: parsed.data.invoiceId },
+        data: { status: invoiceStatus as any },
+      })
+    }
+
+    return created
   })
 
   await writeAuditLog({
     userId: user.id,
-    action: 'PAYMENT_CREATED',
+    action: isCash ? 'PAYMENT_VERIFIED' : 'PAYMENT_CREATED',
     entityType: 'Payment',
     entityId: payment.id,
     metadata: {
@@ -87,6 +122,7 @@ export default defineEventHandler(async (event) => {
       period: invoice.period,
       roomNumber: invoice.tenancy.room.roomNumber,
       tenantName: invoice.tenancy.tenant.fullName,
+      autoVerified: isCash,
     },
   })
 

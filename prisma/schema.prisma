@@ -25,6 +25,7 @@ enum TenancyStatus {
 
 enum InvoiceStatus {
   BELUM_LUNAS
+  SEBAGIAN
   LUNAS
   TELAT
 }
