@@ -1,25 +1,28 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <h1 class="text-2xl font-bold mb-6 text-center">Masuk ke KosFlow</h1>
-      <form @submit.prevent="handleLogin" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input v-model="email" type="email" required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors">
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Masuk ke KosFlow</h1>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input v-model="password" type="password" required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-        <button type="submit" :disabled="loading"
-          class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+      </template>
+
+      <UForm @submit="handleLogin" :state="{}" class="space-y-4">
+        <UFormField label="Email" name="email" required>
+          <UInput v-model="email" type="email" placeholder="email@example.com" class="w-full" />
+        </UFormField>
+
+        <UFormField label="Password" name="password" required>
+          <UInput v-model="password" type="password" placeholder="******" class="w-full" />
+        </UFormField>
+
+        <UAlert v-if="error" color="error" variant="soft" :title="error" icon="heroicons:exclamation-circle-20-solid" />
+
+        <UButton type="submit" :loading="loading" block color="primary" size="lg">
           {{ loading ? 'Memproses...' : 'Masuk' }}
-        </button>
-      </form>
-    </div>
+        </UButton>
+      </UForm>
+    </UCard>
   </div>
 </template>
 

@@ -1,230 +1,209 @@
 <template>
-  <div class="max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Detail Penyewa</h1>
+  <div class="max-w-3xl mx-auto">
+    <div class="flex items-center gap-3 mb-8">
+      <NuxtLink to="/tenants" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
+      </NuxtLink>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Detail Penyewa</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ tenant?.fullName || 'Memuat...' }}</p>
+      </div>
+    </div>
 
-    <div v-if="loading" class="text-gray-500">Memuat data...</div>
-    <div v-else-if="loadError" class="text-red-600">{{ loadError }}</div>
+    <div v-if="loading" class="space-y-4">
+      <USkeleton class="h-48 w-full" />
+      <USkeleton class="h-40 w-full" />
+      <USkeleton class="h-32 w-full" />
+    </div>
+    <div v-else-if="loadError" class="text-red-500 text-center py-8">{{ loadError }}</div>
 
     <template v-else>
-      <!-- Form Edit -->
-      <form @submit.prevent="handleSubmit" class="bg-white p-6 rounded-lg shadow space-y-4 mb-6">
-        <h2 class="text-lg font-semibold">Data Penyewa</h2>
+      <!-- Card: Data Penyewa -->
+      <UCard class="mb-6">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Data Penyewa</h2>
+            <UBadge color="neutral" variant="subtle" size="sm">ID: {{ tenant?.id?.slice(0, 8) }}...</UBadge>
+          </div>
+        </template>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-          <input v-model="form.fullName" type="text" required maxlength="100"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+        <form @submit.prevent="handleSubmit" class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <UFormField label="Nama Lengkap" required>
+              <UInput v-model="form.fullName" maxlength="100" class="w-full" />
+            </UFormField>
+            <UFormField label="No. HP" required>
+              <UInput v-model="form.phone" maxlength="20" class="w-full" />
+            </UFormField>
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">No. HP</label>
-          <input v-model="form.phone" type="tel" required maxlength="20"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+          <UFormField label="Email" hint="Opsional">
+            <UInput v-model="form.email" type="email" class="w-full" />
+          </UFormField>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Email <span class="text-gray-400">(opsional)</span></label>
-          <input v-model="form.email" type="email" maxlength="100"
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <!-- KTP Section -->
-        <div class="border border-gray-200 rounded-md p-4 space-y-3">
-          <label class="block text-sm font-medium text-gray-700">Nomor KTP</label>
-
-          <!-- KTP Masked -->
-          <p class="font-mono text-gray-600 text-lg tracking-wider">{{ tenant?.ktpMasked }}</p>
-
-          <!-- Tombol Lihat KTP -->
-          <button type="button" @click="handleViewKtp"
-            :disabled="ktpLoading"
-            class="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50">
-            {{ ktpLoading ? 'Memuat...' : '👁 Lihat KTP' }}
-          </button>
-
-          <!-- Modal KTP (inline, auto-hide 10 detik) -->
-          <div v-if="ktpVisible"
-            class="mt-2 p-3 bg-yellow-50 border border-yellow-300 rounded-md">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="text-xs text-yellow-700 font-medium mb-1">⚠️ Akses ini dicatat di audit log</p>
-                <p class="font-mono text-xl font-bold tracking-widest text-gray-900">{{ ktpPlain }}</p>
-              </div>
-              <button type="button" @click="ktpVisible = false"
-                class="text-gray-400 hover:text-gray-600 text-xs ml-4">Sembunyikan</button>
+          <!-- KTP Section -->
+          <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Nomor KTP</span>
+              <UButton color="primary" variant="soft" size="sm" :loading="ktpLoading" @click="handleViewKtp">
+                {{ ktpVisible ? 'Sembunyikan' : 'Lihat KTP' }}
+              </UButton>
             </div>
-            <p class="text-xs text-yellow-600 mt-2">Otomatis tersembunyi dalam {{ ktpCountdown }} detik</p>
+
+            <p class="font-mono text-base text-gray-600 dark:text-gray-400 tracking-widest">{{ tenant?.ktpMasked }}</p>
+
+            <UAlert v-if="ktpVisible" color="warning" variant="soft" icon="heroicons:eye-20-solid">
+              <template #description>
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-lg font-bold tracking-widest text-gray-900 dark:text-white">{{ ktpPlain }}</span>
+                  <span class="text-xs text-orange-600 dark:text-orange-400 font-medium">Hilang dalam {{ ktpCountdown }} detik</span>
+                </div>
+                <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">Akses ini dicatat di audit log</p>
+              </template>
+            </UAlert>
+            <p v-if="ktpError" class="text-red-500 text-xs">{{ ktpError }}</p>
+
+            <div>
+              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ganti KTP (biarkan kosong jika tidak ingin mengubah)</label>
+              <UInput v-model="form.ktpNumber" placeholder="16 digit angka baru" maxlength="16" class="w-full font-mono" />
+            </div>
           </div>
-          <p v-if="ktpError" class="text-red-600 text-sm">{{ ktpError }}</p>
 
-          <!-- Update KTP (opsional) -->
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Ganti KTP (kosongkan jika tidak ingin mengubah)</label>
-            <input v-model="form.ktpNumber" type="text" maxlength="16"
-              pattern="\d{16}" title="KTP harus 16 digit angka"
-              placeholder="Isi 16 digit angka baru untuk mengganti"
-              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+          <UAlert v-if="submitError" color="error" variant="soft" :title="submitError" icon="heroicons:exclamation-circle-20-solid" />
+
+          <div class="flex items-center justify-between pt-2">
+            <UButton v-if="user?.role === 'OWNER'" color="error" variant="ghost" :loading="deleting" @click="handleDelete">
+              Hapus Penyewa
+            </UButton>
+            <div v-else />
+            <div class="flex gap-3">
+              <UButton to="/tenants" color="gray" variant="outline">Batal</UButton>
+              <UButton type="submit" :loading="saving" color="primary">Simpan</UButton>
+            </div>
           </div>
-        </div>
+        </form>
+      </UCard>
 
-        <p v-if="submitError" class="text-red-600 text-sm">{{ submitError }}</p>
+      <!-- Card: Kamar & Sewa -->
+      <UCard class="mb-6">
+        <template #header>
+          <h2 class="font-semibold text-gray-900 dark:text-white">Kamar & Sewa</h2>
+        </template>
 
-        <div class="flex justify-between">
-          <!-- Hapus (Owner only) -->
-          <button v-if="user?.role === 'OWNER'" type="button" @click="handleDelete"
-            :disabled="deleting"
-            class="text-red-600 hover:text-red-800 text-sm self-center disabled:opacity-50">
-            {{ deleting ? 'Menghapus...' : 'Hapus Penyewa' }}
-          </button>
-          <div v-else></div>
-
-          <div class="flex gap-3">
-            <NuxtLink to="/tenants"
-              class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
-              Batal
-            </NuxtLink>
-            <button type="submit" :disabled="saving"
-              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50">
-              {{ saving ? 'Menyimpan...' : 'Simpan' }}
-            </button>
-          </div>
-        </div>
-      </form>
-
-      <!-- Section: Kamar & Sewa -->
-      <div class="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 class="text-lg font-semibold mb-4">Kamar & Sewa</h2>
-
-        <!-- Tidak ada tenancy aktif → form Assign -->
         <template v-if="!activeTenancy">
-          <p class="text-sm text-gray-500 mb-4">Penyewa ini belum menempati kamar.</p>
-          <form @submit.prevent="handleAssign" class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Pilih Kamar</label>
-              <select v-model="assignForm.roomId" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="" disabled>-- Pilih kamar tersedia --</option>
-                <option v-for="r in availableRooms" :key="r.id" :value="r.id">
-                  Kamar {{ r.roomNumber }} — Rp {{ Number(r.monthlyRate).toLocaleString('id-ID') }}/bln
-                </option>
-              </select>
-              <p v-if="availableRooms?.length === 0" class="text-xs text-gray-400 mt-1">Tidak ada kamar tersedia saat ini.</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Tanggal Mulai</label>
-              <input v-model="assignForm.startDate" type="date" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <p v-if="assignError" class="text-red-600 text-sm">{{ assignError }}</p>
-            <button type="submit" :disabled="assigning"
-              class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm">
-              {{ assigning ? 'Memproses...' : 'Assign ke Kamar' }}
-            </button>
-          </form>
-        </template>
-
-        <!-- Ada tenancy aktif → info + tombol Akhiri Sewa -->
-        <template v-else>
-          <div class="flex items-center gap-4 p-3 bg-green-50 border border-green-200 rounded-md">
-            <div class="flex-1">
-              <p class="font-medium text-green-800">Kamar {{ activeTenancy.room.roomNumber }}</p>
-              <p class="text-sm text-green-700">Mulai: {{ formatDate(activeTenancy.startDate) }}</p>
-            </div>
-            <button type="button" @click="showEndForm = !showEndForm"
-              class="text-sm text-red-600 hover:text-red-800 border border-red-200 px-3 py-1 rounded-md">
-              Akhiri Sewa
-            </button>
+          <div class="text-center py-6">
+            <Icon name="heroicons:home-20-solid" class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Penyewa ini belum menempati kamar</p>
           </div>
-          <form v-if="showEndForm" @submit.prevent="handleEndTenancy" class="mt-4 space-y-3 border-t pt-4">
+          <form @submit.prevent="handleAssign" class="space-y-4">
+            <UFormField label="Pilih Kamar" required>
+              <USelect v-model="assignForm.roomId" :items="roomOptions" placeholder="-- Pilih kamar tersedia --" class="w-full" />
+              <p v-if="availableRooms?.length === 0" class="text-xs text-gray-400 mt-1">Tidak ada kamar tersedia saat ini.</p>
+            </UFormField>
+            <UFormField label="Tanggal Mulai" required>
+              <UInput v-model="assignForm.startDate" type="date" class="w-full" />
+            </UFormField>
+            <UAlert v-if="assignError" color="error" variant="soft" :title="assignError" icon="heroicons:exclamation-circle-20-solid" />
+            <UButton type="submit" color="primary" :loading="assigning">Assign ke Kamar</UButton>
+          </form>
+        </template>
+
+        <template v-else>
+          <div class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Tanggal Selesai</label>
-              <input v-model="endForm.endDate" type="date" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p class="font-semibold text-green-800 dark:text-green-300">
+                Kamar {{ activeTenancy.room.roomNumber }}
+              </p>
+              <p class="text-sm text-green-700 dark:text-green-400">Mulai {{ formatDate(activeTenancy.startDate) }}</p>
             </div>
-            <p v-if="endError" class="text-red-600 text-sm">{{ endError }}</p>
-            <div class="flex gap-2">
-              <button type="submit" :disabled="ending"
-                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 text-sm">
-                {{ ending ? 'Memproses...' : 'Konfirmasi Akhiri Sewa' }}
-              </button>
-              <button type="button" @click="showEndForm = false"
-                class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
-                Batal
-              </button>
+            <UButton color="error" variant="soft" size="sm" @click="showEndForm = !showEndForm">
+              Akhiri Sewa
+            </UButton>
+          </div>
+
+          <form v-if="showEndForm" @submit.prevent="handleEndTenancy" class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800 space-y-4">
+            <UFormField label="Tanggal Selesai" required>
+              <UInput v-model="endForm.endDate" type="date" class="w-full" />
+            </UFormField>
+            <UAlert v-if="endError" color="error" variant="soft" :title="endError" icon="heroicons:exclamation-circle-20-solid" />
+            <div class="flex gap-3">
+              <UButton type="submit" color="error" :loading="ending">Konfirmasi Akhiri Sewa</UButton>
+              <UButton color="gray" variant="outline" @click="showEndForm = false">Batal</UButton>
             </div>
           </form>
         </template>
-      </div>
+      </UCard>
 
-      <!-- Riwayat Tenancy -->
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h2 class="text-lg font-semibold mb-4">Riwayat Kamar</h2>
-        <div v-if="!tenant?.tenancies?.length" class="text-gray-400 text-sm">Belum pernah menempati kamar.</div>
-        <table v-else class="w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left px-4 py-2 text-gray-500 font-medium">Kamar</th>
-              <th class="text-left px-4 py-2 text-gray-500 font-medium">Tarif</th>
-              <th class="text-left px-4 py-2 text-gray-500 font-medium">Mulai</th>
-              <th class="text-left px-4 py-2 text-gray-500 font-medium">Selesai</th>
-              <th class="text-left px-4 py-2 text-gray-500 font-medium">Status</th>
+      <!-- Card: Riwayat Kamar -->
+      <UCard>
+        <template #header>
+          <h2 class="font-semibold text-gray-900 dark:text-white">Riwayat Kamar</h2>
+        </template>
+
+        <div v-if="!tenant?.tenancies?.length" class="text-sm text-gray-400 text-center py-6">Belum pernah menempati kamar.</div>
+
+        <table v-else class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kamar</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tarif</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mulai</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Selesai</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="t in tenant.tenancies" :key="t.id">
-              <td class="px-4 py-2 font-medium">{{ t.room.roomNumber }}</td>
-              <td class="px-4 py-2">Rp {{ Number(t.room.monthlyRate).toLocaleString('id-ID') }}</td>
-              <td class="px-4 py-2">{{ formatDate(t.startDate) }}</td>
-              <td class="px-4 py-2">{{ t.endDate ? formatDate(t.endDate) : '—' }}</td>
-              <td class="px-4 py-2">
-                <span :class="t.status === 'ACTIVE'
-                  ? 'px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'
-                  : 'px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600'">
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <tr v-for="t in tenant.tenancies" :key="t.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{{ t.room.roomNumber }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">Rp {{ Number(t.room.monthlyRate).toLocaleString('id-ID') }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ formatDate(t.startDate) }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ t.endDate ? formatDate(t.endDate) : '—' }}</td>
+              <td class="px-4 py-3">
+                <UBadge :color="t.status === 'ACTIVE' ? 'success' : 'neutral'" variant="subtle" size="sm">
                   {{ t.status === 'ACTIVE' ? 'Aktif' : 'Selesai' }}
-                </span>
+                </UBadge>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
+      </UCard>
     </template>
   </div>
 </template>
 
 <script setup>
-
 const route = useRoute()
 const id = route.params.id
 const { user } = useUserSession()
 
-// State data
 const tenant = ref(null)
 const loading = ref(true)
 const loadError = ref('')
 
-// Computed: tenancy aktif
 const activeTenancy = computed(() =>
   tenant.value?.tenancies?.find(t => t.status === 'ACTIVE') ?? null
 )
 
-// State assign ke kamar
 const availableRooms = ref([])
 const assignForm = reactive({ roomId: '', startDate: '' })
 const assigning = ref(false)
 const assignError = ref('')
 
-// State akhiri sewa
 const showEndForm = ref(false)
 const endForm = reactive({ endDate: '' })
 const ending = ref(false)
 const endError = ref('')
 
+const roomOptions = computed(() =>
+  availableRooms.value.map(r => ({
+    label: `Kamar ${r.roomNumber} — Rp ${Number(r.monthlyRate).toLocaleString('id-ID')}/bln`,
+    value: r.id,
+  }))
+)
+
 async function loadAvailableRooms() {
-  try {
-    availableRooms.value = await $fetch('/api/rooms/available')
-  } catch {
-    availableRooms.value = []
-  }
+  try { availableRooms.value = await $fetch('/api/rooms/available') }
+  catch { availableRooms.value = [] }
 }
 
 async function handleAssign() {
@@ -266,13 +245,11 @@ async function handleEndTenancy() {
   }
 }
 
-// State form
 const form = reactive({ fullName: '', phone: '', email: '', ktpNumber: '' })
 const saving = ref(false)
 const submitError = ref('')
 const deleting = ref(false)
 
-// State KTP reveal
 const ktpPlain = ref('')
 const ktpVisible = ref(false)
 const ktpLoading = ref(false)
@@ -296,15 +273,11 @@ async function loadTenant() {
   }
 }
 
-onMounted(() => {
-  loadTenant()
-  loadAvailableRooms()
-})
+onMounted(() => { loadTenant(); loadAvailableRooms() })
 
 async function handleViewKtp() {
   ktpError.value = ''
   ktpLoading.value = true
-  // Sembunyikan yang sebelumnya dulu
   ktpVisible.value = false
   clearInterval(ktpTimer)
   try {
@@ -312,7 +285,6 @@ async function handleViewKtp() {
     ktpPlain.value = res.ktpNumber
     ktpVisible.value = true
     ktpCountdown.value = 10
-    // Auto-hide countdown 10 detik
     ktpTimer = setInterval(() => {
       ktpCountdown.value--
       if (ktpCountdown.value <= 0) {
@@ -332,23 +304,14 @@ onUnmounted(() => clearInterval(ktpTimer))
 
 async function handleSubmit() {
   submitError.value = ''
-
-  // Validasi KTP jika diisi
   if (form.ktpNumber && !/^\d{16}$/.test(form.ktpNumber)) {
     submitError.value = 'Nomor KTP baru harus tepat 16 digit angka'
     return
   }
-
   saving.value = true
   try {
-    const body = {
-      fullName: form.fullName,
-      phone: form.phone,
-      email: form.email || undefined,
-    }
-    // Hanya sertakan ktpNumber jika user mengisinya
+    const body = { fullName: form.fullName, phone: form.phone, email: form.email || undefined }
     if (form.ktpNumber) body.ktpNumber = form.ktpNumber
-
     await $fetch(`/api/tenants/${id}`, { method: 'PUT', body })
     await navigateTo('/tenants')
   } catch (e) {
@@ -359,7 +322,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete() {
-  if (!confirm(`Hapus penyewa "${tenant.value?.fullName}"? Tindakan ini tidak bisa dibatalkan.`)) return
+  if (!confirm(`Hapus penyewa "${tenant.value?.fullName}"?`)) return
   deleting.value = true
   try {
     await $fetch(`/api/tenants/${id}`, { method: 'DELETE' })
@@ -373,7 +336,7 @@ async function handleDelete() {
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric', month: 'short', year: 'numeric'
+    day: 'numeric', month: 'short', year: 'numeric',
   })
 }
 </script>

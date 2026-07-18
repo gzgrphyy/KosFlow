@@ -1,95 +1,79 @@
 <template>
   <div class="max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Generate Tagihan</h1>
-
-    <form @submit.prevent="handleSubmit" class="bg-white p-6 rounded-lg shadow space-y-5">
-
-      <!-- Pilih Tenancy -->
+    <div class="flex items-center gap-3 mb-8">
+      <NuxtLink to="/invoices" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
+      </NuxtLink>
       <div>
-        <label class="block text-sm font-medium text-gray-700">Penyewa & Kamar</label>
-        <select v-model="form.tenancyId" required @change="onTenancyChange"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="" disabled>-- Pilih penyewa aktif --</option>
-          <option v-for="t in activeTenancies" :key="t.id" :value="t.id">
-            {{ t.tenant.fullName }} — Kamar {{ t.room.roomNumber }}
-            (Rp {{ Number(t.room.monthlyRate).toLocaleString('id-ID') }}/bln)
-          </option>
-        </select>
-        <p v-if="activeTenancies?.length === 0" class="text-xs text-gray-400 mt-1">
-          Tidak ada penyewa aktif. Assign penyewa ke kamar terlebih dahulu.
-        </p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Generate Tagihan</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Buat tagihan untuk penyewa</p>
       </div>
+    </div>
 
-      <!-- Periode -->
-      <div class="grid grid-cols-2 gap-4">
+    <UCard>
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <UFormField label="Penyewa & Kamar" required>
+          <USelect v-model="form.tenancyId" :items="tenancyOptions" placeholder="-- Pilih penyewa aktif --" class="w-full" @change="onTenancyChange" />
+          <p v-if="activeTenancies?.length === 0" class="text-xs text-gray-400 mt-1">Tidak ada penyewa aktif.</p>
+        </UFormField>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <UFormField label="Periode (Bulan)" required>
+            <UInput v-model="form.period" type="month" class="w-full" />
+          </UFormField>
+          <UFormField label="Jatuh Tempo" required>
+            <UInput v-model="form.dueDate" type="date" class="w-full" />
+          </UFormField>
+        </div>
+
         <div>
-          <label class="block text-sm font-medium text-gray-700">Periode (Bulan)</label>
-          <input v-model="form.period" type="month" required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Jatuh Tempo</label>
-          <input v-model="form.dueDate" type="date" required
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-      </div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Item Tagihan</span>
+            <UButton color="primary" variant="soft" size="2xs" @click="addItem">+ Tambah Item</UButton>
+          </div>
 
-      <!-- Invoice Items -->
-      <div>
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-sm font-medium text-gray-700">Item Tagihan</label>
-          <button type="button" @click="addItem"
-            class="text-sm text-blue-600 hover:text-blue-800">+ Tambah Item</button>
-        </div>
+          <div class="space-y-3">
+            <div v-for="(item, idx) in form.items" :key="idx" class="flex gap-3 items-start">
+              <UInput v-model="item.description" placeholder="Keterangan" class="flex-1" />
+              <UInput v-model.number="item.amount" type="number" min="0" placeholder="Rp" class="w-36" />
+              <UButton icon="heroicons:x-mark-20-solid" color="gray" variant="ghost" size="sm" :disabled="form.items.length === 1" @click="removeItem(idx)" />
+            </div>
+          </div>
 
-        <div class="space-y-2">
-          <div v-for="(item, idx) in form.items" :key="idx"
-            class="flex gap-2 items-center">
-            <input v-model="item.description" type="text" placeholder="Keterangan (misal: Sewa Kamar)" required
-              class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input v-model.number="item.amount" type="number" min="0" placeholder="Jumlah (Rp)" required
-              class="w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <button type="button" @click="removeItem(idx)"
-              :disabled="form.items.length === 1"
-              class="text-red-500 hover:text-red-700 disabled:opacity-30 text-lg px-1">×</button>
+          <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total</span>
+            <span class="text-xl font-bold text-gray-900 dark:text-white">
+              Rp {{ grandTotal.toLocaleString('id-ID') }}
+            </span>
           </div>
         </div>
 
-        <!-- Total -->
-        <div class="mt-3 pt-3 border-t flex justify-between items-center">
-          <span class="text-sm font-medium text-gray-600">Total</span>
-          <span class="text-lg font-bold text-gray-900">
-            Rp {{ grandTotal.toLocaleString('id-ID') }}
-          </span>
+        <UAlert v-if="error" color="error" variant="soft" :title="error" icon="heroicons:exclamation-circle-20-solid" />
+
+        <div class="flex gap-3 pt-2">
+          <UButton type="submit" :loading="loading" color="primary" size="lg">
+            {{ loading ? 'Menyimpan...' : 'Generate Tagihan' }}
+          </UButton>
+          <UButton to="/invoices" color="gray" variant="outline">Batal</UButton>
         </div>
-      </div>
-
-      <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-
-      <div class="flex gap-3">
-        <button type="submit" :disabled="loading"
-          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50">
-          {{ loading ? 'Menyimpan...' : 'Generate Tagihan' }}
-        </button>
-        <NuxtLink to="/invoices"
-          class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
-          Batal
-        </NuxtLink>
-      </div>
-    </form>
+      </form>
+    </UCard>
   </div>
 </template>
 
 <script setup>
-
-// Load semua tenancy aktif untuk dropdown
 const { data: activeTenancies } = await useFetch('/api/invoices/active-tenancies')
 
-// Default period = bulan ini
 const now = new Date()
 const defaultPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-// Default due date = tanggal 10 bulan ini
 const defaultDue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-10`
+
+const tenancyOptions = computed(() =>
+  (activeTenancies.value || []).map(t => ({
+    label: `${t.tenant.fullName} — Kamar ${t.room.roomNumber} (Rp ${Number(t.room.monthlyRate).toLocaleString('id-ID')}/bln)`,
+    value: t.id,
+  }))
+)
 
 const form = reactive({
   tenancyId: '',
@@ -101,7 +85,6 @@ const form = reactive({
 const error = ref('')
 const loading = ref(false)
 
-// Saat pilih tenancy, isi default amount item pertama dari monthlyRate kamar
 function onTenancyChange() {
   const selected = activeTenancies.value?.find(t => t.id === form.tenancyId)
   if (selected && form.items.length > 0) {
@@ -110,9 +93,7 @@ function onTenancyChange() {
   }
 }
 
-function addItem() {
-  form.items.push({ description: '', amount: 0 })
-}
+function addItem() { form.items.push({ description: '', amount: 0 }) }
 
 function removeItem(idx) {
   if (form.items.length === 1) return
@@ -125,12 +106,10 @@ const grandTotal = computed(() =>
 
 async function handleSubmit() {
   error.value = ''
-
   if (form.items.some(i => !i.description.trim() || i.amount <= 0)) {
     error.value = 'Semua item harus punya keterangan dan jumlah lebih dari 0'
     return
   }
-
   loading.value = true
   try {
     await $fetch('/api/invoices', {

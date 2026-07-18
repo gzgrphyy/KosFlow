@@ -1,79 +1,84 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Tagihan</h1>
-      <div class="flex gap-2">
-        <button @click="handleMarkOverdue" :disabled="markingOverdue"
-          class="px-4 py-2 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 text-sm disabled:opacity-50">
-          {{ markingOverdue ? 'Memproses...' : '⏰ Tandai Telat' }}
-        </button>
-        <NuxtLink to="/invoices/create"
-          class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-          + Generate Tagihan
-        </NuxtLink>
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tagihan</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ invoices?.length || 0 }} tagihan</p>
+      </div>
+      <div class="flex gap-3">
+        <UButton color="warning" variant="soft" :loading="markingOverdue" @click="handleMarkOverdue">
+          Tandai Telat
+        </UButton>
+        <UButton icon="heroicons:plus-20-solid" to="/invoices/create" color="primary" size="lg">
+          Generate Tagihan
+        </UButton>
       </div>
     </div>
 
-    <!-- Filter -->
-    <div class="flex flex-wrap gap-3 mb-4">
-      <input v-model="filterPeriod" type="month"
-        class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-      <div class="flex gap-2">
-        <button v-for="s in statusFilters" :key="s.value" @click="filterStatus = s.value"
-          :class="['px-3 py-1 rounded-md text-sm', filterStatus === s.value
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300']">
-          {{ s.label }}
-        </button>
+    <UCard>
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <UInput v-model="filterPeriod" type="month" class="w-40" />
+        <UButtonGroup size="sm">
+          <UButton
+            v-for="s in statusFilters"
+            :key="s.value"
+            :color="filterStatus === s.value ? 'primary' : 'neutral'"
+            :variant="filterStatus === s.value ? 'solid' : 'ghost'"
+            @click="filterStatus = s.value"
+          >
+            {{ s.label }}
+          </UButton>
+        </UButtonGroup>
       </div>
-    </div>
 
-    <p v-if="overdueMsg" class="mb-4 px-4 py-2 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-800">
-      {{ overdueMsg }}
-    </p>
+      <UAlert v-if="overdueMsg" color="warning" variant="soft" :title="overdueMsg" icon="heroicons:clock-20-solid" class="mb-4" />
 
-    <div v-if="loading" class="text-gray-500">Memuat data...</div>
-    <div v-else-if="error" class="text-red-600">{{ error }}</div>
-    <div v-else-if="invoices.length === 0" class="text-gray-500">Tidak ada tagihan ditemukan.</div>
+      <div v-if="loading" class="space-y-3">
+        <USkeleton v-for="i in 4" :key="i" class="h-12 w-full" />
+      </div>
+      <div v-else-if="error" class="text-red-500 text-sm text-center py-8">{{ error }}</div>
+      <div v-else-if="invoices.length === 0" class="text-center py-12">
+        <Icon name="heroicons:currency-dollar-20-solid" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada tagihan ditemukan</p>
+      </div>
 
-    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Penyewa</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Kamar</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Periode</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Jatuh Tempo</th>
-            <th class="text-right px-6 py-3 text-sm font-medium text-gray-500">Total</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Status</th>
-            <th class="text-right px-6 py-3 text-sm font-medium text-gray-500">Aksi</th>
+      <table v-else class="w-full">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Penyewa</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kamar</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Periode</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
+            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="inv in invoices" :key="inv.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 font-medium">{{ inv.tenant.fullName }}</td>
-            <td class="px-6 py-4">{{ inv.room.roomNumber }}</td>
-            <td class="px-6 py-4 font-mono text-sm">{{ inv.period }}</td>
-            <td class="px-6 py-4 text-sm">{{ formatDate(inv.dueDate) }}</td>
-            <td class="px-6 py-4 text-right font-medium">
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tr v-for="inv in invoices" :key="inv.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ inv.tenant.fullName }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ inv.room.roomNumber }}</td>
+            <td class="px-6 py-4 font-mono text-sm text-gray-600 dark:text-gray-400">{{ inv.period }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ formatDate(inv.dueDate) }}</td>
+            <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
               Rp {{ inv.total.toLocaleString('id-ID') }}
             </td>
             <td class="px-6 py-4">
-              <span :class="statusBadge(inv.status)">{{ statusLabel(inv.status) }}</span>
+              <UBadge :color="statusColor(inv.status)" variant="subtle" size="sm">
+                {{ statusLabel(inv.status) }}
+              </UBadge>
             </td>
             <td class="px-6 py-4 text-right">
-              <NuxtLink :to="`/invoices/${inv.id}`"
-                class="text-blue-600 hover:text-blue-800 text-sm">Detail</NuxtLink>
+              <UButton :to="`/invoices/${inv.id}`" icon="heroicons:chevron-right-20-solid" color="gray" variant="ghost" size="sm" />
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
+    </UCard>
   </div>
 </template>
 
 <script setup>
-
 const filterPeriod = ref('')
 const filterStatus = ref('')
 
@@ -102,14 +107,8 @@ function statusLabel(s) {
   return { BELUM_LUNAS: 'Belum Lunas', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
 }
 
-function statusBadge(s) {
-  const base = 'px-2 py-0.5 rounded-full text-xs font-medium'
-  const colors = {
-    BELUM_LUNAS: 'bg-yellow-100 text-yellow-800',
-    LUNAS: 'bg-green-100 text-green-800',
-    TELAT: 'bg-red-100 text-red-800',
-  }
-  return `${base} ${colors[s] || 'bg-gray-100 text-gray-600'}`
+function statusColor(s) {
+  return { BELUM_LUNAS: 'warning', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
 }
 
 function formatDate(dateStr) {

@@ -31,11 +31,11 @@ export function encryptKtp(plaintext: string): Buffer {
 /**
  * Dekripsi buffer KTP yang dihasilkan oleh encryptKtp().
  */
-export function decryptKtp(buf: Buffer): string {
+export function decryptKtp(buf: Uint8Array): string {
     const key = getKey()
-    const iv = buf.subarray(0, IV_LENGTH)
-    const authTag = buf.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)
-    const ciphertext = buf.subarray(IV_LENGTH + AUTH_TAG_LENGTH)
+    const iv = Buffer.from(buf.subarray(0, IV_LENGTH))
+    const authTag = Buffer.from(buf.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH))
+    const ciphertext = Buffer.from(buf.subarray(IV_LENGTH + AUTH_TAG_LENGTH))
 
     const decipher = createDecipheriv(ALGORITHM, key, iv)
     decipher.setAuthTag(authTag)

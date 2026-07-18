@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 234, 234, 0.5);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}

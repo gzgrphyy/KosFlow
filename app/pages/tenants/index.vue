@@ -1,63 +1,63 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Penyewa</h1>
-      <NuxtLink to="/tenants/create"
-        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-        + Tambah Penyewa
-      </NuxtLink>
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Penyewa</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ tenants?.length || 0 }} penyewa terdaftar</p>
+      </div>
+      <UButton icon="heroicons:user-plus-20-solid" to="/tenants/create" color="primary" size="lg">
+        Tambah Penyewa
+      </UButton>
     </div>
 
-    <div class="mb-4">
-      <input v-model="search" type="text" placeholder="Cari nama atau no. HP..."
-        class="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    </div>
+    <UCard>
+      <div class="mb-6">
+        <UInput v-model="search" placeholder="Cari nama atau no. HP..." leading-icon="heroicons:magnifying-glass-20-solid" class="max-w-sm" />
+      </div>
 
-    <div v-if="loading" class="text-gray-500">Memuat data...</div>
-    <div v-else-if="error" class="text-red-600">{{ error }}</div>
-    <div v-else-if="tenants.length === 0" class="text-gray-500">Belum ada penyewa.</div>
+      <div v-if="loading" class="space-y-3">
+        <USkeleton v-for="i in 4" :key="i" class="h-12 w-full" />
+      </div>
+      <div v-else-if="error" class="text-red-500 text-sm text-center py-8">{{ error }}</div>
+      <div v-else-if="tenants.length === 0" class="text-center py-12">
+        <Icon name="heroicons:users-20-solid" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada penyewa</p>
+        <UButton to="/tenants/create" color="primary" variant="soft" size="sm" class="mt-3">Tambah penyewa pertama</UButton>
+      </div>
 
-    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Nama</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">No. HP</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">KTP</th>
-            <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Kamar Aktif</th>
-            <th class="text-right px-6 py-3 text-sm font-medium text-gray-500">Aksi</th>
+      <table v-else class="w-full">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">No. HP</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">KTP</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kamar Aktif</th>
+            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
-          <tr v-for="t in tenants" :key="t.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 font-medium">{{ t.fullName }}</td>
-            <td class="px-6 py-4">{{ t.phone }}</td>
-            <td class="px-6 py-4 font-mono text-sm text-gray-500">{{ t.ktpMasked }}</td>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tr v-for="t in tenants" :key="t.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{{ t.fullName }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ t.phone }}</td>
+            <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-gray-500">{{ t.ktpMasked }}</td>
             <td class="px-6 py-4">
-              <span v-if="t.activeRoom"
-                class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <UBadge v-if="t.activeRoom" color="info" variant="subtle" size="sm">
                 Kamar {{ t.activeRoom.roomNumber }}
-              </span>
-              <span v-else class="text-gray-400 text-sm">—</span>
+              </UBadge>
+              <span v-else class="text-sm text-gray-400">—</span>
             </td>
-            <td class="px-6 py-4 text-right space-x-2">
-              <NuxtLink :to="`/tenants/${t.id}`"
-                class="text-blue-600 hover:text-blue-800 text-sm">Edit</NuxtLink>
-              <button @click="handleDelete(t)"
-                class="text-red-600 hover:text-red-800 text-sm">Hapus</button>
+            <td class="px-6 py-4 text-right">
+              <UButton :to="`/tenants/${t.id}`" icon="heroicons:pencil-square-20-solid" color="gray" variant="ghost" size="sm" />
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
+    </UCard>
   </div>
 </template>
 
 <script setup>
-
 const search = ref('')
-
-// Debounce search agar tidak fetch tiap keystroke
 const debouncedSearch = ref('')
 let debounceTimer = null
 watch(search, (val) => {

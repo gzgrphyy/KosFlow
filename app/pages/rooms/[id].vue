@@ -1,57 +1,53 @@
 <template>
-  <div class="max-w-lg mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Edit Kamar</h1>
-
-    <div v-if="loading" class="text-gray-500">Memuat data...</div>
-    <div v-else-if="error" class="text-red-600">{{ error }}</div>
-
-    <form v-else @submit.prevent="handleSubmit" class="bg-white p-6 rounded-lg shadow space-y-4">
+  <div class="max-w-xl mx-auto">
+    <div class="flex items-center gap-3 mb-8">
+      <NuxtLink to="/rooms" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
+      </NuxtLink>
       <div>
-        <label class="block text-sm font-medium text-gray-700">Nomor Kamar</label>
-        <input v-model="roomNumber" type="text" required maxlength="20"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Kamar</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Ubah detail kamar</p>
       </div>
+    </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Tarif Bulanan (Rp)</label>
-        <input v-model.number="monthlyRate" type="number" min="0" step="0.01" required
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
+    <div v-if="loading" class="text-center py-12">
+      <USkeleton class="h-48 w-full max-w-xl mx-auto" />
+    </div>
+    <div v-else-if="error" class="text-red-500 text-center py-8">{{ error }}</div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Status</label>
-        <select v-model="status"
-          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="AVAILABLE">Tersedia</option>
-          <option value="MAINTENANCE">Perbaikan</option>
-        </select>
-      </div>
+    <UCard v-else>
+      <form @submit.prevent="handleSubmit" class="space-y-5">
+        <UFormField label="Nomor Kamar" name="roomNumber" required>
+          <UInput v-model="roomNumber" maxlength="20" class="w-full" />
+        </UFormField>
 
-      <p v-if="submitError" class="text-red-600 text-sm">{{ submitError }}</p>
+        <UFormField label="Tarif Bulanan (Rp)" name="monthlyRate" required>
+          <UInput v-model.number="monthlyRate" type="number" min="0" class="w-full" />
+        </UFormField>
 
-      <div class="flex justify-between">
-        <button type="button" @click="handleDelete"
-          class="text-red-600 hover:text-red-800 text-sm self-center"
-          :disabled="deleting">
-          {{ deleting ? 'Menghapus...' : 'Hapus kamar ini' }}
-        </button>
-        <div class="flex gap-3">
-          <NuxtLink to="/rooms"
-            class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
-            Batal
-          </NuxtLink>
-          <button type="submit" :disabled="saving"
-            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50">
-            {{ saving ? 'Menyimpan...' : 'Simpan' }}
-          </button>
+        <UFormField label="Status" name="status">
+          <USelect v-model="status" :items="statusOptions" class="w-full" />
+        </UFormField>
+
+        <UAlert v-if="submitError" color="error" variant="soft" :title="submitError" icon="heroicons:exclamation-circle-20-solid" />
+
+        <div class="flex items-center justify-between pt-2">
+          <UButton color="error" variant="ghost" :loading="deleting" @click="handleDelete">
+            {{ deleting ? 'Menghapus...' : 'Hapus kamar ini' }}
+          </UButton>
+          <div class="flex gap-3">
+            <UButton to="/rooms" color="gray" variant="outline">Batal</UButton>
+            <UButton type="submit" :loading="saving" color="primary">
+              {{ saving ? 'Menyimpan...' : 'Simpan' }}
+            </UButton>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </UCard>
   </div>
 </template>
 
 <script setup>
-
 const route = useRoute()
 const id = route.params.id
 
@@ -63,6 +59,11 @@ const error = ref('')
 const submitError = ref('')
 const saving = ref(false)
 const deleting = ref(false)
+
+const statusOptions = [
+  { label: 'Tersedia', value: 'AVAILABLE' },
+  { label: 'Perbaikan', value: 'MAINTENANCE' },
+]
 
 async function loadRoom() {
   loading.value = true

@@ -1,108 +1,114 @@
 <template>
   <div class="max-w-2xl mx-auto">
-    <div class="flex items-center gap-4 mb-6">
-      <NuxtLink to="/invoices" class="text-gray-400 hover:text-gray-600">← Kembali</NuxtLink>
-      <h1 class="text-3xl font-bold">Detail Tagihan</h1>
+    <div class="flex items-center gap-3 mb-8">
+      <NuxtLink to="/invoices" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
+      </NuxtLink>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Detail Tagihan</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Invoice #{{ invoice?.id?.slice(0, 8) }}</p>
+      </div>
     </div>
 
-    <div v-if="loading" class="text-gray-500">Memuat data...</div>
-    <div v-else-if="loadError" class="text-red-600">{{ loadError }}</div>
+    <div v-if="loading" class="space-y-3">
+      <USkeleton v-for="i in 3" :key="i" class="h-24 w-full" />
+    </div>
+    <UAlert v-else-if="loadError" color="error" variant="soft" :title="loadError" icon="heroicons:exclamation-circle-20-solid" />
 
     <template v-else>
-      <!-- Info Tagihan -->
-      <div class="bg-white p-6 rounded-lg shadow mb-6">
-        <div class="flex justify-between items-start mb-4">
+      <UCard class="mb-6">
+        <div class="flex items-start justify-between mb-6">
           <div>
-            <h2 class="text-lg font-semibold">{{ invoice?.tenant?.fullName }}</h2>
-            <p class="text-gray-500 text-sm">Kamar {{ invoice?.room?.roomNumber }}</p>
+            <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ invoice?.tenant?.fullName }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Kamar {{ invoice?.room?.roomNumber }}</p>
           </div>
-          <span :class="statusBadge(invoice?.status)">{{ statusLabel(invoice?.status) }}</span>
+          <UBadge :color="statusColor(invoice?.status)" variant="subtle" size="lg">
+            {{ statusLabel(invoice?.status) }}
+          </UBadge>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
+        <div class="grid grid-cols-2 gap-6 mb-6">
           <div>
-            <p class="font-medium text-gray-700">Periode</p>
-            <p class="font-mono text-base">{{ invoice?.period }}</p>
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Periode</p>
+            <p class="font-mono text-base text-gray-900 dark:text-white mt-1">{{ invoice?.period }}</p>
           </div>
           <div>
-            <p class="font-medium text-gray-700">Jatuh Tempo</p>
-            <p>{{ formatDate(invoice?.dueDate) }}</p>
+            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</p>
+            <p class="text-base text-gray-900 dark:text-white mt-1">{{ formatDate(invoice?.dueDate) }}</p>
           </div>
         </div>
 
-        <!-- Item Tagihan -->
-        <table class="w-full text-sm mb-4">
+        <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-gray-200">
-              <th class="text-left py-2 text-gray-500 font-medium">Keterangan</th>
-              <th class="text-right py-2 text-gray-500 font-medium">Jumlah</th>
+            <tr class="border-b border-gray-100 dark:border-gray-800">
+              <th class="text-left pb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Keterangan</th>
+              <th class="text-right pb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jumlah</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
             <tr v-for="item in invoice?.items" :key="item.id">
-              <td class="py-2">{{ item.description }}</td>
-              <td class="py-2 text-right">Rp {{ item.amount.toLocaleString('id-ID') }}</td>
+              <td class="py-3 text-gray-700 dark:text-gray-300">{{ item.description }}</td>
+              <td class="py-3 text-right text-gray-700 dark:text-gray-300">Rp {{ item.amount.toLocaleString('id-ID') }}</td>
             </tr>
           </tbody>
           <tfoot>
-            <tr class="border-t-2 border-gray-300">
-              <td class="py-2 font-bold">Total</td>
-              <td class="py-2 text-right font-bold text-lg">
+            <tr class="border-t-2 border-gray-200 dark:border-gray-700">
+              <td class="pt-3 font-bold text-gray-900 dark:text-white">Total</td>
+              <td class="pt-3 text-right font-bold text-xl text-gray-900 dark:text-white">
                 Rp {{ invoice?.total?.toLocaleString('id-ID') }}
               </td>
             </tr>
           </tfoot>
         </table>
 
-        <!-- Update Status Manual -->
-        <div class="border-t pt-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
-          <div class="flex gap-2 items-center">
-            <select v-model="newStatus"
-              class="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="BELUM_LUNAS">Belum Lunas</option>
-              <option value="LUNAS">Lunas</option>
-              <option value="TELAT">Telat</option>
-            </select>
-            <button @click="handleUpdateStatus" :disabled="updatingStatus || newStatus === invoice?.status"
-              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm">
+        <div class="border-t border-gray-100 dark:border-gray-800 pt-5 mt-5">
+          <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Update Status</p>
+          <div class="flex gap-3 items-center">
+            <USelect v-model="newStatus" :items="statusOptions" class="w-44" />
+            <UButton :loading="updatingStatus" :disabled="newStatus === invoice?.status" @click="handleUpdateStatus" color="primary">
               {{ updatingStatus ? 'Menyimpan...' : 'Simpan Status' }}
-            </button>
+            </UButton>
           </div>
-          <p v-if="statusError" class="text-red-600 text-sm mt-1">{{ statusError }}</p>
-          <p v-if="statusSuccess" class="text-green-600 text-sm mt-1">{{ statusSuccess }}</p>
+          <UAlert v-if="statusError" color="error" variant="soft" :title="statusError" icon="heroicons:exclamation-circle-20-solid" class="mt-3" />
+          <UAlert v-if="statusSuccess" color="success" variant="soft" :title="statusSuccess" icon="heroicons:check-circle-20-solid" class="mt-3" />
         </div>
-      </div>
+      </UCard>
 
-      <!-- Riwayat Pembayaran -->
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h2 class="text-lg font-semibold mb-4">Riwayat Pembayaran</h2>
-        <div v-if="!invoice?.payments?.length" class="text-gray-400 text-sm">
-          Belum ada pembayaran untuk tagihan ini.
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">Riwayat Pembayaran</p>
+          </div>
+        </template>
+
+        <div v-if="!invoice?.payments?.length" class="text-center py-8">
+          <Icon name="heroicons:banknotes-20-solid" class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada pembayaran</p>
         </div>
         <div v-else class="space-y-3">
           <div v-for="p in invoice.payments" :key="p.id"
-            class="border border-gray-200 rounded-md p-4">
-            <div class="flex justify-between items-start">
+            class="border border-gray-100 dark:border-gray-800 rounded-xl p-4">
+            <div class="flex items-start justify-between">
               <div>
-                <p class="font-medium">Rp {{ Number(p.amount).toLocaleString('id-ID') }}</p>
-                <p class="text-sm text-gray-500">{{ formatDate(p.paymentDate) }}</p>
-                <p v-if="p.notes" class="text-sm text-gray-500 mt-1">{{ p.notes }}</p>
+                <p class="font-semibold text-gray-900 dark:text-white">Rp {{ Number(p.amount).toLocaleString('id-ID') }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ formatDate(p.paymentDate) }}</p>
+                <p v-if="p.notes" class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ p.notes }}</p>
               </div>
-              <span :class="paymentBadge(p.status)">{{ paymentLabel(p.status) }}</span>
+              <UBadge :color="paymentColor(p.status)" variant="subtle" size="sm">
+                {{ paymentLabel(p.status) }}
+              </UBadge>
             </div>
-            <div v-if="p.verifiedBy" class="text-xs text-gray-400 mt-2">
+            <div v-if="p.verifiedBy" class="text-xs text-gray-400 dark:text-gray-500 mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
               Diverifikasi oleh {{ p.verifiedBy.name }} pada {{ formatDate(p.verifiedAt) }}
             </div>
           </div>
         </div>
-      </div>
+      </UCard>
     </template>
   </div>
 </template>
 
 <script setup>
-
 const route = useRoute()
 const id = route.params.id
 
@@ -113,6 +119,12 @@ const newStatus = ref('')
 const updatingStatus = ref(false)
 const statusError = ref('')
 const statusSuccess = ref('')
+
+const statusOptions = [
+  { label: 'Belum Lunas', value: 'BELUM_LUNAS' },
+  { label: 'Lunas', value: 'LUNAS' },
+  { label: 'Telat', value: 'TELAT' },
+]
 
 async function loadInvoice() {
   loading.value = true
@@ -159,27 +171,15 @@ function statusLabel(s) {
   return { BELUM_LUNAS: 'Belum Lunas', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
 }
 
-function statusBadge(s) {
-  const base = 'px-3 py-1 rounded-full text-sm font-medium'
-  const colors = {
-    BELUM_LUNAS: 'bg-yellow-100 text-yellow-800',
-    LUNAS: 'bg-green-100 text-green-800',
-    TELAT: 'bg-red-100 text-red-800',
-  }
-  return `${base} ${colors[s] || 'bg-gray-100 text-gray-600'}`
+function statusColor(s) {
+  return { BELUM_LUNAS: 'warning', LUNAS: 'success', TELAT: 'error' }[s] || 'neutral'
 }
 
 function paymentLabel(s) {
   return { PENDING: 'Menunggu', VERIFIED: 'Terverifikasi', REJECTED: 'Ditolak' }[s] || s
 }
 
-function paymentBadge(s) {
-  const base = 'px-2 py-0.5 rounded-full text-xs font-medium'
-  const colors = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    VERIFIED: 'bg-green-100 text-green-800',
-    REJECTED: 'bg-red-100 text-red-800',
-  }
-  return `${base} ${colors[s] || 'bg-gray-100 text-gray-600'}`
+function paymentColor(s) {
+  return { PENDING: 'warning', VERIFIED: 'success', REJECTED: 'error' }[s] || 'neutral'
 }
 </script>
