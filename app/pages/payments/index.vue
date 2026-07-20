@@ -245,12 +245,37 @@
             <!-- Proof -->
             <section v-if="detail.proofUrl">
               <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Bukti Pembayaran</h3>
-              <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <img :src="detail.proofUrl" alt="Bukti pembayaran" class="w-full h-48 object-cover cursor-pointer" @click="openProofImage(detail.proofUrl)" />
+              <div
+                ref="proofContainerRef"
+                class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 relative transition-all duration-300"
+                :class="{ 'proof-zoomed': proofZoomed }"
+                @wheel="onProofWheel">
+                <img
+                  :src="detail.proofUrl"
+                  alt="Bukti pembayaran"
+                  class="w-full cursor-pointer select-none transition-all duration-300"
+                  :class="proofZoomed ? 'h-full object-contain' : 'h-48 object-cover'"
+                  :style="proofZoomed ? {
+                    transform: `scale(${proofZoomScale}) translate(${proofPan.x}px, ${proofPan.y}px)`,
+                    cursor: proofZoomScale > 1 ? (proofDragging ? 'grabbing' : 'grab') : 'pointer'
+                  } : {}"
+                  draggable="false"
+                  @click="toggleProofZoom"
+                  @mousedown="onProofMouseDown"
+                  @mousemove="onProofMouseMove"
+                  @mouseup="onProofMouseUp"
+                  @mouseleave="onProofMouseUp" />
+
+                <div v-if="proofZoomed" class="absolute top-2 right-2 flex items-center gap-1 z-10">
+                  <UButton icon="lucide:minus" color="gray" variant="solid" size="xs" @click.stop="proofZoomOut" :disabled="proofZoomScale <= 1" />
+                  <span class="text-xs font-mono text-white bg-black/50 px-1.5 py-0.5 rounded select-none">{{ Math.round(proofZoomScale * 100) }}%</span>
+                  <UButton icon="lucide:plus" color="gray" variant="solid" size="xs" @click.stop="proofZoomIn" :disabled="proofZoomScale >= 5" />
+                  <UButton icon="lucide:x" color="gray" variant="solid" size="xs" @click.stop="closeProofZoom" />
+                </div>
               </div>
               <div class="flex items-center gap-2 mt-3">
-                <UButton color="gray" variant="soft" size="sm" icon="lucide:zoom-in" @click="openProofImage(detail.proofUrl)">
-                  Zoom
+                <UButton color="gray" variant="soft" size="sm" :icon="proofZoomed ? 'lucide:zoom-out' : 'lucide:zoom-in'" @click="toggleProofZoom">
+                  {{ proofZoomed ? 'Kecilkan' : 'Zoom' }}
                 </UButton>
                 <UButton color="gray" variant="soft" size="sm" icon="lucide:download" :to="detail.proofUrl" download>
                   Download
@@ -320,15 +345,7 @@
       </div>
     </UModal>
 
-    <!-- Proof Image Preview Modal -->
-    <UModal v-model="proofModalOpen">
-      <div class="relative">
-        <div class="absolute top-4 right-4 z-10">
-          <UButton icon="lucide:x" color="gray" variant="solid" size="sm" @click="proofModalOpen = false" />
-        </div>
-        <img v-if="proofImageUrl" :src="proofImageUrl" alt="Bukti pembayaran" class="w-full h-auto max-h-[80vh] object-contain rounded-2xl" />
-      </div>
-    </UModal>
+
   </div>
 </template>
 
@@ -537,13 +554,69 @@ async function handleVerify() {
   }
 }
 
-// Proof Image Preview
-const proofModalOpen = ref(false)
-const proofImageUrl = ref('')
+// Inline Proof Zoom
+const proofZoomed = ref(false)
+const proofZoomScale = ref(1)
+const proofPan = ref({ x: 0, y: 0 })
+const proofDragging = ref(false)
+const proofDragStart = ref({ x: 0, y: 0 })
+const proofPanStart = ref({ x: 0, y: 0 })
+const proofContainerRef = ref(null)
 
-function openProofImage(url) {
-  proofImageUrl.value = url
-  proofModalOpen.value = true
+function toggleProofZoom() {
+  proofZoomed.value = !proofZoomed.value
+  if (!proofZoomed.value) {
+    proofZoomScale.value = 1
+    proofPan.value = { x: 0, y: 0 }
+  }
+}
+
+function closeProofZoom() {
+  proofZoomed.value = false
+  proofZoomScale.value = 1
+  proofPan.value = { x: 0, y: 0 }
+}
+
+function proofZoomIn() {
+  proofZoomScale.value = Math.min(5, +(proofZoomScale.value + 0.5).toFixed(1))
+}
+
+function proofZoomOut() {
+  proofZoomScale.value = Math.max(1, +(proofZoomScale.value - 0.5).toFixed(1))
+  if (proofZoomScale.value <= 1) {
+    proofPan.value = { x: 0, y: 0 }
+  }
+}
+
+function onProofWheel(e) {
+  if (!proofZoomed.value) return
+  e.preventDefault()
+  const delta = e.deltaY > 0 ? -0.25 : 0.25
+  proofZoomScale.value = Math.max(1, Math.min(5, +(proofZoomScale.value + delta).toFixed(2)))
+  if (proofZoomScale.value <= 1) {
+    proofPan.value = { x: 0, y: 0 }
+  }
+}
+
+function onProofMouseDown(e) {
+  if (!proofZoomed.value || proofZoomScale.value <= 1) return
+  proofDragging.value = true
+  proofDragStart.value = { x: e.clientX, y: e.clientY }
+  proofPanStart.value = { ...proofPan.value }
+}
+
+function onProofMouseMove(e) {
+  if (!proofDragging.value) return
+  const dx = e.clientX - proofDragStart.value.x
+  const dy = e.clientY - proofDragStart.value.y
+  proofPan.value = {
+    x: proofPanStart.value.x + dx,
+    y: proofPanStart.value.y + dy,
+  }
+}
+
+function onProofMouseUp() {
+  proofDragging.value = false
 }
 
 // Export
@@ -656,5 +729,14 @@ function statusColor(s) {
 @keyframes drawerSlideIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+.proof-zoomed {
+  max-height: 65vh;
+  touch-action: none;
+}
+
+.proof-zoomed img {
+  min-height: 50vh;
 }
 </style>
