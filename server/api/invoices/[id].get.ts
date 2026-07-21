@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
                 orderBy: { createdAt: 'desc' },
                 include: {
                     verifiedBy: { select: { id: true, name: true } },
+                    refundedBy: { select: { id: true, name: true } },
                 },
             },
         },
@@ -56,6 +57,10 @@ export default defineEventHandler(async (event) => {
             verifiedAt: p.verifiedAt,
             verifiedBy: p.verifiedBy,
             createdAt: p.createdAt,
+            refundedAmount: Number(p.refundedAmount ?? 0),
+            refundedAt: p.refundedAt,
+            refundNote: p.refundNote,
+            refundedBy: p.refundedBy,
         })),
     }
 })

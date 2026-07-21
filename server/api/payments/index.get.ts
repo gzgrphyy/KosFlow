@@ -9,6 +9,7 @@ const querySchema = z.object({
   status: z.enum(['PENDING', 'VERIFIED', 'REJECTED']).optional(),
   roomId: z.string().optional(),
   tenantId: z.string().optional(),
+  refundedStatus: z.enum(['all', 'refunded', 'not_refunded']).optional(),
   sortBy: z.enum(['paymentDate', 'amount', 'tenantName']).default('paymentDate'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   page: z.coerce.number().int().positive().default(1),
@@ -44,6 +45,21 @@ export default defineEventHandler(async (event) => {
   if (query.method) where.method = query.method
   if (query.status) where.status = query.status
 
+  if (query.refundedStatus === 'refunded') {
+    where.refundedAmount = { gt: 0 }
+  } else if (query.refundedStatus === 'not_refunded') {
+    const orClause = [
+      { refundedAmount: null },
+      { refundedAmount: 0 },
+    ]
+    if (where.OR) {
+      where.AND = [{ OR: where.OR }, { OR: orClause }]
+      delete where.OR
+    } else {
+      where.OR = orClause
+    }
+  }
+
   if (query.roomId || query.tenantId) {
     const tenancyFilter: any = {}
     if (query.roomId) tenancyFilter.roomId = query.roomId
@@ -77,12 +93,13 @@ export default defineEventHandler(async (event) => {
           },
         },
         verifiedBy: { select: { id: true, name: true } },
+        refundedBy: { select: { id: true, name: true } },
       },
     }),
     prisma.payment.count({ where }),
     prisma.payment.aggregate({
       _count: true,
-      _sum: { amount: true },
+      _sum: { amount: true, refundedAmount: true },
       where: { status: 'VERIFIED' },
     }),
   ])
@@ -94,16 +111,16 @@ export default defineEventHandler(async (event) => {
 
   const [thisMonthRevenue, todayRevenue] = await Promise.all([
     prisma.payment.aggregate({
-      _sum: { amount: true },
+      _sum: { amount: true, refundedAmount: true },
       where: { status: 'VERIFIED', invoice: { period: month } },
     }),
     prisma.payment.aggregate({
-      _sum: { amount: true },
+      _sum: { amount: true, refundedAmount: true },
       where: { status: 'VERIFIED', paymentDate: { gte: todayStart, lt: todayEnd } },
     }),
   ])
 
-  const totalRevenue = Number(statsRaw._sum.amount ?? 0)
+  const totalRevenue = Number(statsRaw._sum.amount ?? 0) - Number(statsRaw._sum.refundedAmount ?? 0)
 
   const mapped = data.map(p => {
     const totalInvoice = p.invoice.items.reduce((s, i) => s + Number(i.amount), 0)
@@ -118,6 +135,10 @@ export default defineEventHandler(async (event) => {
       notes: p.notes,
       verifiedAt: p.verifiedAt,
       createdAt: p.createdAt,
+      refundedAmount: Number(p.refundedAmount ?? 0),
+      refundedAt: p.refundedAt,
+      refundNote: p.refundNote,
+      refundedBy: p.refundedBy ? { id: p.refundedBy.id, name: p.refundedBy.name } : null,
       invoice: {
         id: p.invoice.id,
         period: p.invoice.period,
@@ -140,8 +161,8 @@ export default defineEventHandler(async (event) => {
     stats: {
       totalTransactions: statsRaw._count,
       totalRevenue,
-      thisMonthRevenue: Number(thisMonthRevenue._sum.amount ?? 0),
-      todayRevenue: Number(todayRevenue._sum.amount ?? 0),
+      thisMonthRevenue: Number(thisMonthRevenue._sum.amount ?? 0) - Number(thisMonthRevenue._sum.refundedAmount ?? 0),
+      todayRevenue: Number(todayRevenue._sum.amount ?? 0) - Number(todayRevenue._sum.refundedAmount ?? 0),
     },
   }
 })

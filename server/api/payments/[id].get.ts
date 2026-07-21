@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
         },
       },
       verifiedBy: { select: { id: true, name: true } },
+      refundedBy: { select: { id: true, name: true } },
     },
   })
 
@@ -63,6 +64,10 @@ export default defineEventHandler(async (event) => {
       remaining: Math.max(remaining, 0),
       isFullyPaid: remaining <= 0,
     },
+    refundedAmount: Number(payment.refundedAmount ?? 0),
+    refundedAt: payment.refundedAt,
+    refundNote: payment.refundNote,
+    refundedBy: payment.refundedBy,
     verifiedBy: payment.verifiedBy,
   }
 })

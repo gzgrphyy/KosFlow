@@ -70,12 +70,34 @@
             </span>
           </div>
           <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Total Dikembalikan</span>
+            <span class="font-semibold text-red-600 dark:text-red-400">
+              Rp {{ totalRefunded.toLocaleString('id-ID') }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
             <span class="text-gray-500 dark:text-gray-400">Sisa Tagihan</span>
             <span class="font-semibold" :class="remainingAmount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'">
               Rp {{ remainingAmount.toLocaleString('id-ID') }}
             </span>
           </div>
         </div>
+
+        <!-- Overpayment Alert -->
+        <UAlert
+          v-if="overpaymentAmount > 0"
+          color="warning"
+          variant="soft"
+          icon="heroicons:banknotes-20-solid"
+          class="mt-4"
+        >
+          <template #title>
+            <span class="font-semibold">Kelebihan Pembayaran</span>
+          </template>
+          <template #description>
+            <p class="text-sm">Pembayaran melebihi tagihan sebesar <strong>Rp {{ overpaymentAmount.toLocaleString('id-ID') }}</strong>. Jangan lupa kembalikan kelebihan ini ke penyewa.</p>
+          </template>
+        </UAlert>
 
         <!-- Catat Pembayaran Button -->
         <div v-if="invoice?.status !== 'LUNAS'" class="mt-5">
@@ -140,6 +162,23 @@
                   Lihat Bukti
                 </a>
               </div>
+            </div>
+            <div v-if="p.refundedAmount > 0" class="mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-red-600 dark:text-red-400 font-medium">
+                  Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }} telah dikembalikan
+                </span>
+                <span v-if="p.refundedBy" class="text-xs text-gray-400 dark:text-gray-500">
+                  oleh {{ p.refundedBy.name }} · {{ formatDate(p.refundedAt) }}
+                </span>
+              </div>
+              <p v-if="p.refundNote" class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ p.refundNote }}</p>
+            </div>
+            <div v-if="canRefundPayment(p)" class="mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
+              <UButton color="orange" variant="soft" size="xs" @click="openRefundModal(p)">
+                <Icon name="heroicons:arrow-uturn-left-20-solid" class="w-3.5 h-3.5" />
+                Tandai Sudah Dikembalikan
+              </UButton>
             </div>
             <div v-if="p.verifiedBy" class="text-xs text-gray-400 dark:text-gray-500 mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
               Diverifikasi oleh {{ p.verifiedBy.name }} pada {{ formatDate(p.verifiedAt) }}
@@ -221,6 +260,48 @@
           <p v-if="paymentError" class="text-sm text-red-600 dark:text-red-400 mt-4">{{ paymentError }}</p>
         </div>
       </div>
+
+      <!-- Refund Modal -->
+      <div v-if="refundPanelOpen">
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Tandai Sudah Dikembalikan</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 font-mono">
+            Pembayaran Rp {{ Number(refundTarget?.amount || 0).toLocaleString('id-ID') }} — {{ invoice?.tenant?.fullName }}
+          </p>
+
+          <div class="space-y-5">
+            <UFormField label="Jumlah Dikembalikan" required>
+              <input
+                v-model="refundForm.amount"
+                type="text"
+                inputmode="numeric"
+                placeholder="0"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+              />
+              <p class="text-xs text-gray-400 mt-1">Maksimal Rp {{ maxRefundable.toLocaleString('id-ID') }}</p>
+            </UFormField>
+
+            <UFormField label="Catatan">
+              <textarea
+                v-model="refundForm.notes"
+                placeholder="Keterangan refund..."
+                maxlength="500"
+                rows="3"
+                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none resize-none"
+              ></textarea>
+            </UFormField>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 mt-6">
+            <UButton color="gray" variant="ghost" @click="closeRefundPanel">Batal</UButton>
+            <UButton :loading="submittingRefund" color="orange" @click="handleSubmitRefund">
+              {{ submittingRefund ? 'Menyimpan...' : 'Konfirmasi Refund' }}
+            </UButton>
+          </div>
+
+          <p v-if="refundError" class="text-sm text-red-600 dark:text-red-400 mt-4">{{ refundError }}</p>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -291,8 +372,18 @@ const totalPaid = computed(() =>
     .reduce((s, p) => s + Number(p.amount), 0)
 )
 
+const totalRefunded = computed(() =>
+  (invoice.value?.payments || [])
+    .filter(p => p.status === 'VERIFIED')
+    .reduce((s, p) => s + Number(p.refundedAmount || 0), 0)
+)
+
+const overpaymentAmount = computed(() =>
+  Math.max(0, totalPaid.value - (invoice.value?.total || 0) - totalRefunded.value)
+)
+
 const remainingAmount = computed(() =>
-  Math.max(0, (invoice.value?.total || 0) - totalPaid.value)
+  Math.max(0, (invoice.value?.total || 0) - totalPaid.value + totalRefunded.value)
 )
 
 function statusLabel(s) {
@@ -377,6 +468,73 @@ async function handleSubmitPayment() {
     paymentError.value = e.data?.statusMessage || 'Gagal mencatat pembayaran'
   } finally {
     submittingPayment.value = false
+  }
+}
+
+// Refund
+const refundPanelOpen = ref(false)
+const submittingRefund = ref(false)
+const refundError = ref('')
+const refundTarget = ref(null)
+
+const refundForm = reactive({
+  amount: '',
+  notes: '',
+})
+
+const maxRefundable = computed(() => {
+  if (!refundTarget.value) return 0
+  const amount = Number(refundTarget.value.amount)
+  const alreadyRefunded = Number(refundTarget.value.refundedAmount || 0)
+  return amount - alreadyRefunded
+})
+
+function canRefundPayment(p) {
+  if (p.status !== 'VERIFIED') return false
+  const alreadyRefunded = Number(p.refundedAmount || 0)
+  return alreadyRefunded < Number(p.amount)
+}
+
+function openRefundModal(p) {
+  refundTarget.value = p
+  refundForm.amount = String(overpaymentAmount.value > 0 ? Math.min(overpaymentAmount.value, maxRefundable.value) : maxRefundable.value)
+  refundForm.notes = ''
+  refundError.value = ''
+  refundPanelOpen.value = true
+}
+
+function closeRefundPanel() {
+  refundPanelOpen.value = false
+  refundTarget.value = null
+  refundForm.amount = ''
+  refundForm.notes = ''
+  refundError.value = ''
+}
+
+async function handleSubmitRefund() {
+  refundError.value = ''
+  const amountNum = Number(refundForm.amount)
+  if (!amountNum || amountNum <= 0) {
+    refundError.value = 'Jumlah refund harus lebih dari 0'
+    return
+  }
+  if (amountNum > maxRefundable.value) {
+    refundError.value = `Jumlah refund tidak boleh melebihi Rp ${maxRefundable.value.toLocaleString('id-ID')}`
+    return
+  }
+
+  submittingRefund.value = true
+  try {
+    await $fetch(`/api/payments/${refundTarget.value.id}/refund`, {
+      method: 'POST',
+      body: { amount: amountNum, notes: refundForm.notes || undefined },
+    })
+    closeRefundPanel()
+    await loadInvoice()
+  } catch (e) {
+    refundError.value = e.data?.statusMessage || 'Gagal mencatat refund'
+  } finally {
+    submittingRefund.value = false
   }
 }
 </script>

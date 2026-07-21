@@ -53,7 +53,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  verifiedPayments Payment[]
+  verifiedPayments Payment[]  @relation("VerifiedPayments")
+  refundedPayments Payment[]  @relation("RefundedPayments")
   auditLogs        AuditLog[]
 
   @@map("users")
@@ -145,8 +146,14 @@ model Payment {
   notes          String?
   createdAt      DateTime      @default(now())
 
+  refundedAmount Decimal?      @db.Decimal(12, 2) @default(0)
+  refundedAt     DateTime?
+  refundNote     String?
+  refundedById   String?
+
   invoice    Invoice @relation(fields: [invoiceId], references: [id])
-  verifiedBy User?   @relation(fields: [verifiedById], references: [id])
+  verifiedBy User?   @relation("VerifiedPayments", fields: [verifiedById], references: [id])
+  refundedBy User?   @relation("RefundedPayments", fields: [refundedById], references: [id])
 
   @@map("payments")
 }

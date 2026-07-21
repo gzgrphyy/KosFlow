@@ -45,6 +45,8 @@
 
         <USelect v-model="filters.status" :items="statusFilterOptions" class="w-44" />
 
+        <USelect v-model="filters.refundedStatus" :items="refundFilterOptions" class="w-44" />
+
         <USelect v-model="filters.roomId" :items="roomOptions" class="w-32" />
 
         <div class="flex-1" />
@@ -101,6 +103,7 @@
             </th>
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Refund</th>
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Verifikator</th>
             <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
@@ -136,13 +139,16 @@
               </UBadge>
             </td>
             <td class="px-6 py-4">
+              <span v-if="p.refundedAmount > 0" class="text-xs text-red-600 dark:text-red-400 font-medium">
+                Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }}
+              </span>
+              <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
+            </td>
+            <td class="px-6 py-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ p.verifiedBy?.name || '—' }}</span>
             </td>
             <td class="px-6 py-4 text-right" @click.stop>
               <div class="flex items-center justify-end gap-1">
-                <UTooltip v-if="p.status === 'PENDING'" text="Verifikasi" :delay-duration="300">
-                  <UButton icon="lucide:check-circle" color="success" variant="ghost" size="sm" @click="openVerify(p)" />
-                </UTooltip>
                 <UTooltip text="Detail" :delay-duration="300">
                   <UButton icon="lucide:eye" color="gray" variant="ghost" size="sm" @click="openDetail(p.id)" />
                 </UTooltip>
@@ -239,6 +245,21 @@
                   <span class="text-sm text-gray-500 dark:text-gray-400">No. Referensi</span>
                   <span class="text-sm font-mono font-medium text-gray-900 dark:text-white">{{ detail.referenceNo }}</span>
                 </div>
+                <div v-if="detail.refundedAmount > 0" class="border-t border-gray-100 dark:border-gray-800 pt-3 mt-3">
+                  <div class="flex justify-between">
+                    <span class="text-sm text-red-600 dark:text-red-400 font-medium">Sudah Dikembalikan</span>
+                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">Rp {{ Number(detail.refundedAmount).toLocaleString('id-ID') }}</span>
+                  </div>
+                  <div v-if="detail.refundedBy" class="flex justify-between mt-1">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Oleh</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ detail.refundedBy.name }}</span>
+                  </div>
+                  <div v-if="detail.refundedAt" class="flex justify-between mt-1">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Tanggal Refund</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(detail.refundedAt) }}</span>
+                  </div>
+                  <p v-if="detail.refundNote" class="text-sm text-gray-500 dark:text-gray-400 mt-2">{{ detail.refundNote }}</p>
+                </div>
               </div>
             </section>
 
@@ -289,6 +310,8 @@
             <!-- Verification History -->
             <section>
               <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Riwayat Verifikasi</h3>
+
+              <!-- Already verified -->
               <div v-if="detail.verifiedBy" class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 space-y-2">
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-500 dark:text-gray-400">Diverifikasi oleh</span>
@@ -303,10 +326,77 @@
                   <p class="text-sm text-gray-700 dark:text-gray-300">{{ detail.notes }}</p>
                 </div>
               </div>
+
+              <!-- Pending — inline verify form -->
+              <div v-else-if="detail.status === 'PENDING'" class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 space-y-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Rp {{ Number(detail.amount).toLocaleString('id-ID') }} — {{ detail.tenant.fullName }}
+                </p>
+
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                  <USelect v-model="verifyForm.status" :items="verifyStatusOptions" class="w-full" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
+                  <UTextarea v-model="verifyForm.notes" placeholder="Catatan verifikasi..." :maxlength="500" class="w-full" />
+                </div>
+
+                <UButton :loading="verifying" color="primary" class="w-full" @click="handleVerify">
+                  {{ verifying ? 'Menyimpan...' : 'Konfirmasi Verifikasi' }}
+                </UButton>
+
+                <UAlert v-if="verifyError" color="error" variant="soft" :title="verifyError" icon="lucide:alert-circle" />
+              </div>
+
+              <!-- Not verified and not pending (e.g. rejected without verify data) -->
               <div v-else class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Belum diverifikasi</p>
               </div>
             </section>
+
+            <!-- Refund Action -->
+            <div v-if="detail.status === 'VERIFIED'">
+              <section>
+                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Refund / Kembalian</h3>
+                <div class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 space-y-4">
+                  <div v-if="Number(detail.refundedAmount || 0) >= Number(detail.amount)" class="text-sm text-green-600 dark:text-green-400">
+                    Seluruh pembayaran sudah dikembalikan.
+                  </div>
+                  <template v-else>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      Pembayaran ini memiliki sisa yang bisa dikembalikan.
+                    </p>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Dikembalikan</label>
+                      <input
+                        v-model="refundDrawerForm.amount"
+                        type="text"
+                        inputmode="numeric"
+                        placeholder="0"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+                      />
+                      <p class="text-xs text-gray-400 mt-1">Maksimal Rp {{ maxRefundableDrawer.toLocaleString('id-ID') }}</p>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
+                      <textarea
+                        v-model="refundDrawerForm.notes"
+                        placeholder="Keterangan refund..."
+                        maxlength="500"
+                        rows="3"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none resize-none"
+                      ></textarea>
+                    </div>
+                    <UButton :loading="refundingDrawer" color="orange" class="w-full" @click="handleRefundFromDrawer">
+                      {{ refundingDrawer ? 'Menyimpan...' : 'Tandai Sudah Dikembalikan' }}
+                    </UButton>
+                    <UAlert v-if="refundDrawerError" color="error" variant="soft" :title="refundDrawerError" icon="lucide:alert-circle" />
+                  </template>
+                </div>
+              </section>
+            </div>
 
             <!-- Additional Notes -->
             <section v-if="detail.notes && !detail.verifiedBy">
@@ -322,28 +412,6 @@
       </div>
     </div>
 
-    <!-- Verify Modal -->
-    <UModal v-model="verifyModalOpen">
-      <div class="p-6">
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Verifikasi Pembayaran</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          {{ verifyTarget ? 'Rp ' + Number(verifyTarget.amount).toLocaleString('id-ID') + ' — ' + verifyTarget.tenant.fullName : '' }}
-        </p>
-
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
-        <USelect v-model="verifyForm.status" :items="verifyStatusOptions" class="w-full mb-4" />
-
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Catatan (opsional)</label>
-        <UTextarea v-model="verifyForm.notes" placeholder="Catatan verifikasi..." :maxlength="500" class="w-full mb-6" />
-
-        <div class="flex items-center justify-end gap-3">
-          <UButton color="gray" variant="ghost" @click="verifyModalOpen = false">Batal</UButton>
-          <UButton :loading="verifying" color="primary" @click="handleVerify">Konfirmasi</UButton>
-        </div>
-
-        <UAlert v-if="verifyError" color="error" variant="soft" :title="verifyError" icon="lucide:alert-circle" class="mt-4" />
-      </div>
-    </UModal>
 
 
   </div>
@@ -362,6 +430,7 @@ const filters = reactive({
   period: '',
   method: null,
   status: null,
+  refundedStatus: null,
   roomId: null,
 })
 
@@ -381,6 +450,7 @@ const queryParams = computed(() => {
   if (filters.period) q.period = filters.period
   if (filters.method) q.method = filters.method
   if (filters.status) q.status = filters.status
+  if (filters.refundedStatus) q.refundedStatus = filters.refundedStatus
   if (filters.roomId) q.roomId = filters.roomId
   return q
 })
@@ -441,6 +511,12 @@ const statusFilterOptions = [
   { label: 'Terverifikasi', value: 'VERIFIED' },
   { label: 'Menunggu', value: 'PENDING' },
   { label: 'Ditolak', value: 'REJECTED' },
+]
+
+const refundFilterOptions = [
+  { label: 'Semua Status Refund', value: null },
+  { label: 'Sudah Dikembalikan', value: 'refunded' },
+  { label: 'Belum Dikembalikan', value: 'not_refunded' },
 ]
 
 const rooms = ref([])
@@ -516,8 +592,6 @@ function closeDrawer() {
 }
 
 // Verify
-const verifyModalOpen = ref(false)
-const verifyTarget = ref(null)
 const verifyForm = reactive({ status: 'VERIFIED', notes: '' })
 const verifying = ref(false)
 const verifyError = ref('')
@@ -527,25 +601,18 @@ const verifyStatusOptions = [
   { label: 'Ditolak', value: 'REJECTED' },
 ]
 
-function openVerify(p) {
-  verifyTarget.value = p
-  verifyForm.status = 'VERIFIED'
-  verifyForm.notes = ''
-  verifyError.value = ''
-  verifyModalOpen.value = true
-}
-
 async function handleVerify() {
-  if (!verifyTarget.value) return
+  if (!detail.value) return
   verifying.value = true
   verifyError.value = ''
   try {
-    await $fetch(`/api/payments/${verifyTarget.value.id}/verify`, {
+    await $fetch(`/api/payments/${detail.value.id}/verify`, {
       method: 'PATCH',
       body: { status: verifyForm.status, notes: verifyForm.notes },
     })
-    verifyModalOpen.value = false
-    verifyTarget.value = null
+    verifyForm.notes = ''
+    verifyError.value = ''
+    await openDetail(detail.value.id)
     refresh()
   } catch (e) {
     verifyError.value = e.data?.statusMessage || 'Gagal verifikasi'
@@ -647,6 +714,49 @@ async function handleExport() {
   }
 }
 
+// Refund from drawer
+const refundDrawerForm = reactive({ amount: '', notes: '' })
+const refundingDrawer = ref(false)
+const refundDrawerError = ref('')
+
+const maxRefundableDrawer = computed(() => {
+  if (!detail.value) return 0
+  const amount = Number(detail.value.amount)
+  const alreadyRefunded = Number(detail.value.refundedAmount || 0)
+  return amount - alreadyRefunded
+})
+
+async function handleRefundFromDrawer() {
+  if (!detail.value) return
+  refundDrawerError.value = ''
+  const amountNum = Number(refundDrawerForm.amount)
+  if (!amountNum || amountNum <= 0) {
+    refundDrawerError.value = 'Jumlah refund harus lebih dari 0'
+    return
+  }
+  if (amountNum > maxRefundableDrawer.value) {
+    refundDrawerError.value = `Jumlah refund tidak boleh melebihi Rp ${maxRefundableDrawer.value.toLocaleString('id-ID')}`
+    return
+  }
+
+  refundingDrawer.value = true
+  try {
+    await $fetch(`/api/payments/${detail.value.id}/refund`, {
+      method: 'POST',
+      body: { amount: amountNum, notes: refundDrawerForm.notes || undefined },
+    })
+    refundDrawerForm.amount = ''
+    refundDrawerForm.notes = ''
+    refundDrawerError.value = ''
+    await openDetail(detail.value.id)
+    refresh()
+  } catch (e) {
+    refundDrawerError.value = e.data?.statusMessage || 'Gagal mencatat refund'
+  } finally {
+    refundingDrawer.value = false
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -690,8 +800,6 @@ function statusColor(s) {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .drawer-panel {
