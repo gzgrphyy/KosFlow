@@ -76,8 +76,8 @@
     </UCard>
 
     <!-- Table -->
-    <UCard v-else class="overflow-hidden">
-      <table class="w-full">
+    <UCard v-else class="overflow-x-auto">
+      <table class="w-full whitespace-nowrap">
         <thead>
           <tr class="border-b border-gray-100 dark:border-gray-800">
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" @click="toggleSort('paymentDate')">
@@ -86,26 +86,26 @@
                 <Icon v-if="sortBy === 'paymentDate'" :name="sortOrder === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up'" class="w-3 h-3" />
               </div>
             </th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Transaksi</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Transaksi</th>
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" @click="toggleSort('tenantName')">
               <div class="flex items-center gap-1">
                 Penyewa
                 <Icon v-if="sortBy === 'tenantName'" :name="sortOrder === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up'" class="w-3 h-3" />
               </div>
             </th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kamar</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Periode</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kamar</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Periode</th>
             <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" @click="toggleSort('amount')">
               <div class="flex items-center justify-end gap-1">
                 Nominal
                 <Icon v-if="sortBy === 'amount'" :name="sortOrder === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up'" class="w-3 h-3" />
               </div>
             </th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Refund</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Verifikator</th>
-            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Refund</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Verifikator</th>
+            <th class="text-right px-3 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -115,39 +115,39 @@
             <td class="px-6 py-4">
               <span class="text-sm text-gray-700 dark:text-gray-300 font-mono">{{ formatDate(p.paymentDate) }}</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span class="text-xs font-mono text-gray-500 dark:text-gray-400">#{{ p.id.slice(0, 8) }}</span>
             </td>
             <td class="px-6 py-4">
               <span class="text-sm font-medium text-gray-900 dark:text-white">{{ p.tenant.fullName }}</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span class="text-sm text-gray-600 dark:text-gray-400">{{ p.room.roomNumber }}</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span class="text-sm font-mono text-gray-600 dark:text-gray-400">{{ p.invoice.period }}</span>
             </td>
             <td class="px-6 py-4 text-right">
               <span class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ Number(p.amount).toLocaleString('id-ID') }}</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ methodLabel(p.method) }}</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <UBadge :color="statusColor(p.status)" variant="subtle" size="sm">
                 {{ statusLabel(p.status) }}
               </UBadge>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span v-if="p.refundedAmount > 0" class="text-xs text-red-600 dark:text-red-400 font-medium">
                 Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }}
               </span>
               <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ p.verifiedBy?.name || '—' }}</span>
             </td>
-            <td class="px-6 py-4 text-right" @click.stop>
+            <td class="px-3 py-4 text-right" @click.stop>
               <div class="flex items-center justify-end gap-1">
                 <UTooltip text="Detail" :delay-duration="300">
                   <UButton icon="lucide:eye" color="gray" variant="ghost" size="sm" @click="openDetail(p.id)" />

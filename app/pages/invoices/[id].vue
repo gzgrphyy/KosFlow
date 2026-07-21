@@ -22,9 +22,16 @@
             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ invoice?.tenant?.fullName }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">Kamar {{ invoice?.room?.roomNumber }}</p>
           </div>
-          <UBadge :color="statusColor(invoice?.status)" variant="subtle" size="lg">
-            {{ statusLabel(invoice?.status) }}
-          </UBadge>
+          <div class="flex items-center gap-2">
+            <UTooltip v-if="invoice?.status !== 'LUNAS' && remainingAmount > 0" text="Kirim Reminder WhatsApp" :delay-duration="300">
+              <UButton icon="lucide:message-circle" color="emerald" variant="soft" size="sm" @click="sendWaReminder">
+                Kirim Reminder
+              </UButton>
+            </UTooltip>
+            <UBadge :color="statusColor(invoice?.status)" variant="subtle" size="lg">
+              {{ statusLabel(invoice?.status) }}
+            </UBadge>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-6 mb-6">
@@ -357,6 +364,40 @@ async function handleUpdateStatus() {
   } finally {
     updatingStatus.value = false
   }
+}
+
+function sendWaReminder() {
+  if (!invoice.value) return
+  const { tenant, room, period, dueDate, total, status, payments } = invoice.value
+  if (!tenant?.phone) {
+    alert('Nomor WA penyewa tidak tersedia')
+    return
+  }
+
+  const verifiedPayments = (payments || []).filter(p => p.status === 'VERIFIED')
+  const totalPaidAmount = verifiedPayments.reduce((s, p) => s + Number(p.amount), 0)
+  const totalRefundedAmount = verifiedPayments.reduce((s, p) => s + Number(p.refundedAmount || 0), 0)
+
+  const daysOverdue = status === 'TELAT' ? calcDaysOverdue(dueDate) : undefined
+  const remainingAmount = status === 'SEBAGIAN'
+    ? Math.max(0, total - totalPaidAmount + totalRefundedAmount)
+    : undefined
+
+  const text = generateWaReminderText({
+    tenantName: tenant.fullName,
+    roomNumber: room.roomNumber,
+    period,
+    dueDate,
+    total,
+    status,
+    paidAmount: totalPaidAmount > 0 ? totalPaidAmount : undefined,
+    remainingAmount,
+    daysOverdue,
+    refundedAmount: totalRefundedAmount > 0 ? totalRefundedAmount : undefined,
+  })
+
+  const url = generateWaUrl(tenant.phone, text)
+  window.open(url, '_blank')
 }
 
 function formatDate(dateStr) {

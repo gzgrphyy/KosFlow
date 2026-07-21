@@ -69,7 +69,12 @@
               </UBadge>
             </td>
             <td class="px-6 py-4 text-right">
-              <UButton :to="`/invoices/${inv.id}`" icon="heroicons:chevron-right-20-solid" color="gray" variant="ghost" size="sm" />
+              <div class="flex items-center justify-end gap-1">
+                <UTooltip v-if="inv.status !== 'LUNAS' && (inv.total - (inv.totalPaid || 0) + (inv.totalRefunded || 0)) > 0" text="Kirim Reminder WhatsApp" :delay-duration="300">
+                  <UButton icon="lucide:message-circle" color="emerald" variant="ghost" size="sm" @click="sendWaReminder(inv)" />
+                </UTooltip>
+                <UButton :to="`/invoices/${inv.id}`" icon="heroicons:chevron-right-20-solid" color="gray" variant="ghost" size="sm" />
+              </div>
             </td>
           </tr>
         </tbody>
@@ -115,6 +120,35 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
     day: 'numeric', month: 'short', year: 'numeric',
   })
+}
+
+function sendWaReminder(inv) {
+  const phone = inv.tenant?.phone
+  if (!phone) {
+    alert('Nomor WA penyewa tidak tersedia')
+    return
+  }
+
+  const daysOverdue = inv.status === 'TELAT' ? calcDaysOverdue(inv.dueDate) : undefined
+  const remainingAmount = inv.status === 'SEBAGIAN'
+    ? Math.max(0, inv.total - inv.totalPaid + inv.totalRefunded)
+    : undefined
+
+  const text = generateWaReminderText({
+    tenantName: inv.tenant.fullName,
+    roomNumber: inv.room.roomNumber,
+    period: inv.period,
+    dueDate: inv.dueDate,
+    total: inv.total,
+    status: inv.status,
+    paidAmount: inv.totalPaid > 0 ? inv.totalPaid : undefined,
+    remainingAmount,
+    daysOverdue,
+    refundedAmount: inv.totalRefunded > 0 ? inv.totalRefunded : undefined,
+  })
+
+  const url = generateWaUrl(phone, text)
+  window.open(url, '_blank')
 }
 
 const markingOverdue = ref(false)

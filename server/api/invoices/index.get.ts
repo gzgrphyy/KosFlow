@@ -25,6 +25,10 @@ export default defineEventHandler(async (event) => {
                 },
             },
             items: { select: { id: true, description: true, amount: true } },
+            payments: {
+                where: { status: 'VERIFIED' },
+                select: { amount: true, refundedAmount: true },
+            },
         },
     })
 
@@ -39,5 +43,7 @@ export default defineEventHandler(async (event) => {
         tenancyId: inv.tenancyId,
         items: inv.items.map(item => ({ ...item, amount: Number(item.amount) })),
         total: inv.items.reduce((sum, item) => sum + Number(item.amount), 0),
+        totalPaid: inv.payments.reduce((sum, p) => sum + Number(p.amount), 0),
+        totalRefunded: inv.payments.reduce((sum, p) => sum + Number(p.refundedAmount ?? 0), 0),
     }))
 })
