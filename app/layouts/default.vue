@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-14 items-center">
           <div class="flex items-center gap-8">
-            <NuxtLink to="/" class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">
+            <NuxtLink to="/dashboard" class="font-bold text-lg text-gray-900 dark:text-white tracking-tight">
               KosFlow
             </NuxtLink>
             <div class="flex items-center gap-1">
@@ -56,7 +56,7 @@ function toggleDark() {
 }
 
 const navLinks = [
-  { to: '/', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/rooms', label: 'Kamar' },
   { to: '/tenants', label: 'Penyewa' },
   { to: '/invoices', label: 'Tagihan' },
@@ -64,7 +64,7 @@ const navLinks = [
 ]
 
 function isActive(to) {
-  if (to === '/') return route.path === '/'
+  if (to === '/dashboard') return route.path === '/dashboard'
   return route.path.startsWith(to)
 }
 

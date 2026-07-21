@@ -1,7 +1,6 @@
 // server/api/rooms/available.get.ts
+// Public endpoint — tidak perlu login
 export default defineEventHandler(async (event) => {
-    await requireAuth(event)
-
     const rooms = await prisma.room.findMany({
         where: { status: 'AVAILABLE' },
         orderBy: { roomNumber: 'asc' },

@@ -42,7 +42,7 @@ async function handleLogin() {
       method: 'POST',
       body: { email: email.value, password: password.value },
     })
-    await navigateTo('/')
+    await navigateTo('/dashboard')
   } catch (e) {
     error.value = e.data?.statusMessage || 'Login gagal'
   } finally {
