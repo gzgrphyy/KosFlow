@@ -40,7 +40,7 @@
         <UCard>
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-semibold text-gray-900 dark:text-white">Ringkasan Kamar</h2>
-            <UBadge :color="occupancyPct >= 80 ? 'orange' : occupancyPct >= 50 ? 'yellow' : 'green'" variant="subtle">
+            <UBadge :color="occupancyPct >= 80 ? 'orange' : occupancyPct >= 50 ? 'yellow' : 'green'" variant="subtle" :class="badgeDarkClass">
               {{ occupancyPct }}% terisi
             </UBadge>
           </div>
@@ -129,6 +129,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const { loggedIn, user } = useUserSession()
 
 const { data: stats, pending, error } = await useFetch('/api/dashboard/stats')
@@ -147,6 +149,12 @@ const todayDate = now.toLocaleDateString('id-ID', {
 const occupancyPct = computed(() => {
   if (!stats.value?.totalRooms) return 0
   return Math.round((stats.value.occupiedRooms / stats.value.totalRooms) * 100)
+})
+
+const badgeDarkClass = computed(() => {
+  if (occupancyPct.value >= 80) return 'dark:text-orange-300 dark:bg-orange-900/20'
+  if (occupancyPct.value >= 50) return 'dark:text-yellow-300 dark:bg-yellow-900/20'
+  return 'dark:text-green-300 dark:bg-green-900/20'
 })
 
 const statCards = computed(() => [

@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-xl mx-auto">
     <div class="flex items-center gap-3 mb-8">
-      <NuxtLink to="/rooms" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+      <NuxtLink to="/rooms" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
         <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
       </NuxtLink>
       <div>
@@ -32,7 +32,7 @@
         <UAlert v-if="submitError" color="error" variant="soft" :title="submitError" icon="heroicons:exclamation-circle-20-solid" />
 
         <div class="flex items-center justify-between pt-2">
-          <UButton color="error" variant="ghost" :loading="deleting" @click="handleDelete">
+          <UButton color="error" variant="ghost" class="dark:text-red-400" :loading="deleting" @click="handleDelete">
             {{ deleting ? 'Menghapus...' : 'Hapus kamar ini' }}
           </UButton>
           <div class="flex gap-3">
@@ -48,6 +48,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const route = useRoute()
 const id = route.params.id
 

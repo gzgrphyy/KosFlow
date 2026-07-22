@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-xl mx-auto">
     <div class="flex items-center gap-3 mb-8">
-      <NuxtLink to="/tenants" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+      <NuxtLink to="/tenants" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
         <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
       </NuxtLink>
       <div>
@@ -29,8 +29,8 @@
           <UInput v-model="form.ktpNumber" placeholder="16 digit angka" maxlength="16" class="w-full font-mono tracking-wider" />
           <template #hint>
             <div class="flex items-center gap-1 mt-1">
-              <Icon name="heroicons:lock-closed-20-solid" class="w-3 h-3 text-gray-400" />
-              <span class="text-xs text-gray-400">Akan dienkripsi sebelum disimpan (AES-256-GCM)</span>
+              <Icon name="heroicons:lock-closed-20-solid" class="w-3 h-3 text-gray-400 dark:text-gray-500" />
+              <span class="text-xs text-gray-400 dark:text-gray-500">Akan dienkripsi sebelum disimpan (AES-256-GCM)</span>
             </div>
           </template>
         </UFormField>
@@ -49,6 +49,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const form = reactive({
   fullName: '',
   phone: '',

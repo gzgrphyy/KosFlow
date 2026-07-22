@@ -1,20 +1,45 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+  <div class="container-public">
     <!-- Header -->
-    <section class="pt-16 md:pt-24 pb-12 text-center">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Fasilitas & Galeri</h1>
-      <p class="text-gray-500 max-w-xl mx-auto">Lihat langsung fasilitas dan suasana KosFlow.</p>
+    <section
+      v-motion="{
+        initial: { y: 30, opacity: 0 },
+        enter: { y: 0, opacity: 1, transition: { duration: 600, ease: 'easeOut' } },
+      }"
+      class="pt-12 md:pt-16 pb-12 text-center"
+    >
+      <span class="tag bg-earth-gray-100 text-earth-gray-600 mb-4">Galeri</span>
+      <h1 class="font-heading text-3xl md:text-4xl font-bold text-earth-black mb-4">Fasilitas & Galeri</h1>
+      <p class="text-earth-gray-500 max-w-xl mx-auto">Lihat langsung fasilitas dan suasana KosFlow.</p>
     </section>
 
     <!-- Galeri Foto -->
-    <section class="pb-16">
-      <h2 class="text-xl font-bold text-gray-900 mb-6">Galeri Kos</h2>
+    <section
+      v-motion="{
+        initial: { y: 50, opacity: 0 },
+        visibleOnce: { y: 0, opacity: 1, transition: { duration: 700, ease: 'easeOut' } },
+      }"
+      class="pb-16"
+    >
+      <div class="flex items-center gap-3 mb-6">
+        <span class="tag bg-earth-black text-white">Foto</span>
+        <h2 class="font-heading text-xl font-bold text-earth-black">Galeri Kos</h2>
+      </div>
       <PublicGalleryGrid :images="galleryImages" @select="openLightbox" />
     </section>
 
     <!-- Fasilitas Lengkap -->
-    <section class="pb-20">
-      <h2 class="text-xl font-bold text-gray-900 mb-6">Fasilitas Lengkap</h2>
+    <section
+      v-motion="{
+        initial: { y: 50, opacity: 0 },
+        visibleOnce: { y: 0, opacity: 1, transition: { duration: 700, ease: 'easeOut' } },
+      }"
+      class="pb-20"
+    >
+      <div class="flex items-center gap-3 mb-6">
+        <span class="tag bg-earth-yellow/20 text-earth-black font-semibold">Fasilitas</span>
+        <h2 class="font-heading text-xl font-bold text-earth-black">Fasilitas Lengkap</h2>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div v-for="fac in facilityList" :key="fac.label">
           <PublicFacilityBadge v-bind="fac" />
@@ -26,10 +51,10 @@
     <Teleport to="body">
       <div
         v-if="lightboxActive"
-        class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
         @click="closeLightbox"
       >
-        <button class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors" @click="closeLightbox">
+        <button class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors" @click="closeLightbox">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -37,12 +62,12 @@
         <img
           :src="galleryImages[activeIndex]?.url"
           :alt="galleryImages[activeIndex]?.caption"
-          class="max-w-full max-h-[90vh] rounded-xl object-contain"
+          class="max-w-full max-h-[90vh] rounded-2xl object-contain"
           @click.stop
         />
         <button
           v-if="activeIndex > 0"
-          class="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors"
+          class="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
           @click.stop="activeIndex--"
         >
           <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +76,7 @@
         </button>
         <button
           v-if="activeIndex < galleryImages.length - 1"
-          class="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors"
+          class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
           @click.stop="activeIndex++"
         >
           <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">

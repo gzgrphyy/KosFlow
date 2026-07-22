@@ -26,11 +26,12 @@
               variant="ghost"
               color="gray"
               size="sm"
+              class="text-gray-600 dark:text-gray-300"
               @click="toggleDark"
             />
             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ user?.name }}</span>
                     <UTooltip text="Logout" :delay-duration="300">
-                <UButton icon="heroicons:arrow-right-start-on-rectangle-20-solid" color="gray" variant="ghost" size="sm" @click="logout" />
+                <UButton icon="heroicons:arrow-right-start-on-rectangle-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" @click="logout" />
               </UTooltip>
           </div>
         </div>

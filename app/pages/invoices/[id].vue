@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-2xl mx-auto">
     <div class="flex items-center gap-3 mb-8">
-      <NuxtLink to="/invoices" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+      <NuxtLink to="/invoices" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
         <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
       </NuxtLink>
       <div>
@@ -237,7 +237,7 @@
 
             <UFormField label="Upload Bukti">
               <label class="flex items-center gap-3 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <Icon name="heroicons:cloud-arrow-up-20-solid" class="w-5 h-5 text-gray-400 shrink-0" />
+                <Icon name="heroicons:cloud-arrow-up-20-solid" class="w-5 h-5 text-gray-400 dark:text-gray-500 shrink-0" />
                 <span class="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
                   {{ paymentForm.proofFile ? paymentForm.proofFile.name : 'Pilih file...' }}
                 </span>
@@ -258,7 +258,7 @@
           </div>
 
           <div class="flex items-center justify-end gap-3 mt-6">
-            <UButton color="gray" variant="ghost" @click="closePaymentPanel">Batal</UButton>
+            <UButton color="gray" variant="ghost" class="text-gray-600 dark:text-gray-300" @click="closePaymentPanel">Batal</UButton>
             <UButton :loading="submittingPayment" color="primary" @click="handleSubmitPayment">
               {{ submittingPayment ? 'Menyimpan...' : 'Simpan Pembayaran' }}
             </UButton>
@@ -300,7 +300,7 @@
           </div>
 
           <div class="flex items-center justify-end gap-3 mt-6">
-            <UButton color="gray" variant="ghost" @click="closeRefundPanel">Batal</UButton>
+            <UButton color="gray" variant="ghost" class="text-gray-600 dark:text-gray-300" @click="closeRefundPanel">Batal</UButton>
             <UButton :loading="submittingRefund" color="orange" @click="handleSubmitRefund">
               {{ submittingRefund ? 'Menyimpan...' : 'Konfirmasi Refund' }}
             </UButton>
@@ -314,6 +314,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const route = useRoute()
 const id = route.params.id
 

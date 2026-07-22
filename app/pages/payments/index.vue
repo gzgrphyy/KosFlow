@@ -29,7 +29,7 @@
       <div class="flex flex-wrap items-center gap-3">
         <UInput v-model="filters.search" placeholder="Cari transaksi..." class="w-56" @update:model-value="onSearchChange">
           <template #trailing>
-            <Icon name="lucide:search" class="w-4 h-4 text-gray-400" />
+            <Icon name="lucide:search" class="w-4 h-4 text-gray-400 dark:text-gray-500" />
           </template>
         </UInput>
 
@@ -68,7 +68,7 @@
     <UCard v-else-if="payments.length === 0">
       <div class="text-center py-16">
         <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <Icon name="lucide:wallet" class="w-8 h-8 text-gray-400" />
+          <Icon name="lucide:wallet" class="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
         <p class="text-base font-medium text-gray-900 dark:text-white mb-1">Belum ada transaksi</p>
         <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada transaksi pembayaran yang tercatat.</p>
@@ -150,7 +150,7 @@
             <td class="px-3 py-4 text-right" @click.stop>
               <div class="flex items-center justify-end gap-1">
                 <UTooltip text="Detail" :delay-duration="300">
-                  <UButton icon="lucide:eye" color="gray" variant="ghost" size="sm" @click="openDetail(p.id)" />
+                  <UButton icon="lucide:eye" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" @click="openDetail(p.id)" />
                 </UTooltip>
               </div>
             </td>
@@ -164,14 +164,17 @@
           Menampilkan {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, total) }} dari {{ total }} transaksi
         </p>
         <div class="flex items-center gap-1">
-          <UButton icon="lucide:chevron-left" color="gray" variant="ghost" size="sm" :disabled="page <= 1" @click="page--" />
+          <UButton icon="lucide:chevron-left" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" :disabled="page <= 1" @click="page--" />
           <template v-for="p in visiblePages" :key="p">
-            <UButton v-if="p === '...'" color="gray" variant="ghost" size="sm" disabled>...</UButton>
-            <UButton v-else :color="p === page ? 'primary' : 'gray'" :variant="p === page ? 'solid' : 'ghost'" size="sm" @click="page = p">
+            <UButton v-if="p === '...'" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" disabled>...</UButton>
+            <UButton v-else-if="p === page" color="primary" variant="solid" size="sm" @click="page = p">
+              {{ p }}
+            </UButton>
+            <UButton v-else color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" @click="page = p">
               {{ p }}
             </UButton>
           </template>
-          <UButton icon="lucide:chevron-right" color="gray" variant="ghost" size="sm" :disabled="page >= totalPages" @click="page++" />
+          <UButton icon="lucide:chevron-right" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" :disabled="page >= totalPages" @click="page++" />
         </div>
       </div>
     </UCard>
@@ -192,7 +195,7 @@
               <h2 class="text-lg font-bold text-gray-900 dark:text-white">Detail Transaksi</h2>
               <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">#{{ detail.id.slice(0, 12) }}</p>
             </div>
-            <UButton icon="lucide:x" color="gray" variant="ghost" size="sm" @click="closeDrawer" />
+            <UButton icon="lucide:x" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" @click="closeDrawer" />
           </div>
 
           <div class="p-6 space-y-6">
@@ -418,6 +421,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const page = ref(1)
 const pageSize = ref(20)
 const sortBy = ref('paymentDate')

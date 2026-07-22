@@ -71,9 +71,9 @@
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">
                 <UTooltip v-if="inv.status !== 'LUNAS' && (inv.total - (inv.totalPaid || 0) + (inv.totalRefunded || 0)) > 0" text="Kirim Reminder WhatsApp" :delay-duration="300">
-                  <UButton icon="lucide:message-circle" color="emerald" variant="ghost" size="sm" @click="sendWaReminder(inv)" />
+                  <UButton icon="lucide:message-circle" color="emerald" variant="ghost" size="sm" class="dark:text-emerald-400" @click="sendWaReminder(inv)" />
                 </UTooltip>
-                <UButton :to="`/invoices/${inv.id}`" icon="heroicons:chevron-right-20-solid" color="gray" variant="ghost" size="sm" />
+                <UButton :to="`/invoices/${inv.id}`" icon="heroicons:chevron-right-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" />
               </div>
             </td>
           </tr>
@@ -84,6 +84,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const filterPeriod = ref('')
 const filterStatus = ref('')
 

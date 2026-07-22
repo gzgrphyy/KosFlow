@@ -47,7 +47,7 @@
               <span v-else class="text-sm text-gray-400">—</span>
             </td>
             <td class="px-6 py-4 text-right">
-              <UButton :to="`/tenants/${t.id}`" icon="heroicons:pencil-square-20-solid" color="gray" variant="ghost" size="sm" />
+              <UButton :to="`/tenants/${t.id}`" icon="heroicons:pencil-square-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" />
             </td>
           </tr>
         </tbody>
@@ -57,6 +57,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const search = ref('')
 const debouncedSearch = ref('')
 let debounceTimer = null

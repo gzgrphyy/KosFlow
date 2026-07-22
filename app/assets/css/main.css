@@ -1,20 +1,82 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ═══════════════════════════════════════════════
+   Earthon-inspired Design System — KosFlow
+   ═══════════════════════════════════════════════ */
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Urbanist', 'Inter', system-ui, sans-serif;
+
+  --color-earth-black: #0e0e0e;
+  --color-earth-yellow: #fff017;
+  --color-earth-yellow-dark: #e6d800;
+  --color-earth-gray-50: #fafafa;
+  --color-earth-gray-100: #f6f6f6;
+  --color-earth-gray-200: #eaeaea;
+  --color-earth-gray-300: #d7d7d7;
+  --color-earth-gray-400: #979797;
+  --color-earth-gray-500: #656565;
+  --color-earth-gray-600: #484848;
+  --color-earth-gray-700: #262626;
 }
 
+/* ─── Base ─── */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply text-earth-black bg-white;
+}
+
+/* ─── Glass effect ─── */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(234, 234, 234, 0.5);
 }
 
 .dark .glass {
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+/* ─── Pill nav item ─── */
+.pill-nav {
+  @apply rounded-full px-5 py-2 text-sm font-medium transition-all duration-200;
+}
+.pill-nav--active {
+  @apply bg-earth-black text-white;
+}
+.pill-nav--inactive {
+  @apply text-earth-black/80 hover:bg-earth-black/5;
+}
+
+/* ─── Yellow accent button ─── */
+.btn-yellow {
+  @apply inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-earth-yellow text-earth-black font-semibold text-sm
+         hover:bg-earth-yellow-dark active:scale-[0.97] transition-all duration-200;
+}
+
+/* ─── Section spacing ─── */
+.section-padding {
+  @apply py-16 md:py-20;
+}
+
+/* ─── Container ─── */
+.container-public {
+  @apply max-w-6xl mx-auto px-4 sm:px-6;
+}
+
+/* ─── Card style ─── */
+.card-public {
+  @apply bg-white rounded-2xl border border-earth-gray-200 hover:border-earth-gray-300
+         hover:shadow-sm transition-all duration-200;
+}
+
+/* ─── Badge / Tag ─── */
+.tag {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium;
 }

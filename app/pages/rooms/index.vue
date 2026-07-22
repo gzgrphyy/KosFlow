@@ -60,7 +60,7 @@
               </UBadge>
             </td>
             <td class="px-6 py-4 text-right">
-              <UButton :to="`/rooms/${room.id}`" icon="heroicons:pencil-square-20-solid" color="gray" variant="ghost" size="sm" />
+              <UButton :to="`/rooms/${room.id}`" icon="heroicons:pencil-square-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" />
             </td>
           </tr>
         </tbody>
@@ -70,6 +70,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const filter = ref('')
 
 const queryParams = computed(() => {

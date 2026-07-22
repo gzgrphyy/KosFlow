@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-2xl mx-auto">
     <div class="flex items-center gap-3 mb-8">
-      <NuxtLink to="/invoices" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+      <NuxtLink to="/invoices" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
         <Icon name="heroicons:arrow-left-20-solid" class="w-5 h-5" />
       </NuxtLink>
       <div>
@@ -36,7 +36,7 @@
             <div v-for="(item, idx) in form.items" :key="idx" class="flex gap-3 items-start">
               <UInput v-model="item.description" placeholder="Keterangan" class="flex-1" />
               <UInput v-model.number="item.amount" type="number" min="0" placeholder="Rp" class="w-36" />
-              <UButton icon="heroicons:x-mark-20-solid" color="gray" variant="ghost" size="sm" :disabled="form.items.length === 1" @click="removeItem(idx)" />
+              <UButton icon="heroicons:x-mark-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" :disabled="form.items.length === 1" @click="removeItem(idx)" />
             </div>
           </div>
 
@@ -62,6 +62,8 @@
 </template>
 
 <script setup>
+definePageMeta({ middleware: 'auth' })
+
 const { data: activeTenancies } = await useFetch('/api/invoices/active-tenancies')
 
 const now = new Date()
