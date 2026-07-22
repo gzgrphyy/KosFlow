@@ -24,6 +24,15 @@
       <USkeleton v-for="i in 4" :key="i" class="h-24 rounded-2xl" />
     </div>
 
+    <!-- Monthly Trend Chart -->
+    <PaymentsMonthlyTrendChart
+      :data="trendData || []"
+      :months="trendMonths"
+      :loading="trendLoading"
+      @update:months="trendMonths = $event"
+      @point-click="onChartPointClick"
+    />
+
     <!-- Filters -->
     <UCard class="mb-6">
       <div class="flex flex-wrap items-center gap-3">
@@ -474,6 +483,22 @@ const total = computed(() => pagination.value.total)
 const totalPages = computed(() => pagination.value.totalPages)
 
 const loadingStats = computed(() => loading.value && !response.value)
+
+// Monthly trend
+const trendMonths = ref(6)
+const { data: trendData, status: trendStatus } = await useFetch('/api/payments/monthly-trend', {
+  query: { months: trendMonths },
+  watch: [trendMonths],
+})
+const trendLoading = computed(() => trendStatus.value === 'pending')
+
+function onChartPointClick(month) {
+  const [y, m] = month.split('-')
+  filters.dateFrom = `${y}-${m}-01`
+  const lastDay = new Date(+y, +m, 0).getDate()
+  filters.dateTo = `${y}-${m}-${String(lastDay).padStart(2, '0')}`
+  page.value = 1
+}
 
 const statCards = computed(() => [
   {

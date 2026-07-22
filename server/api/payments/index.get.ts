@@ -105,14 +105,15 @@ export default defineEventHandler(async (event) => {
   ])
 
   const now = new Date()
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const todayEnd = new Date(todayStart.getTime() + 86400000)
 
   const [thisMonthRevenue, todayRevenue] = await Promise.all([
     prisma.payment.aggregate({
       _sum: { amount: true, refundedAmount: true },
-      where: { status: 'VERIFIED', invoice: { period: month } },
+      where: { status: 'VERIFIED', paymentDate: { gte: thisMonthStart, lt: nextMonthStart } },
     }),
     prisma.payment.aggregate({
       _sum: { amount: true, refundedAmount: true },
