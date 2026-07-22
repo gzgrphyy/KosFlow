@@ -298,13 +298,13 @@
                 </div>
               </div>
               <div class="flex items-center gap-2 mt-3">
-                <UButton color="gray" variant="soft" size="sm" :icon="proofZoomed ? 'lucide:zoom-out' : 'lucide:zoom-in'" @click="toggleProofZoom">
+                <UButton color="gray" variant="soft" size="sm" class="text-gray-600 dark:text-gray-300" :icon="proofZoomed ? 'lucide:zoom-out' : 'lucide:zoom-in'" @click="toggleProofZoom">
                   {{ proofZoomed ? 'Kecilkan' : 'Zoom' }}
                 </UButton>
-                <UButton color="gray" variant="soft" size="sm" icon="lucide:download" :to="detail.proofUrl" download>
+                <UButton color="gray" variant="soft" size="sm" class="text-gray-600 dark:text-gray-300" icon="lucide:download" :to="detail.proofUrl" download>
                   Download
                 </UButton>
-                <UButton color="gray" variant="soft" size="sm" icon="lucide:external-link" :to="detail.proofUrl" target="_blank">
+                <UButton color="gray" variant="soft" size="sm" class="text-gray-600 dark:text-gray-300" icon="lucide:external-link" :to="detail.proofUrl" target="_blank">
                   Buka Ukuran Penuh
                 </UButton>
               </div>

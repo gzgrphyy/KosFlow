@@ -54,7 +54,7 @@
           <UButton type="submit" :loading="loading" color="primary" size="lg">
             {{ loading ? 'Menyimpan...' : 'Generate Tagihan' }}
           </UButton>
-          <UButton to="/invoices" color="gray" variant="outline">Batal</UButton>
+          <UButton to="/invoices" color="gray" variant="outline" class="text-gray-600 dark:text-gray-300">Batal</UButton>
         </div>
       </form>
     </UCard>

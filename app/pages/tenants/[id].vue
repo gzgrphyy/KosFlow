@@ -77,7 +77,7 @@
             </UButton>
             <div v-else />
             <div class="flex gap-3">
-              <UButton to="/tenants" color="gray" variant="outline">Batal</UButton>
+              <UButton to="/tenants" color="gray" variant="outline" class="text-gray-600 dark:text-gray-300">Batal</UButton>
               <UButton type="submit" :loading="saving" color="primary">Simpan</UButton>
             </div>
           </div>
@@ -128,7 +128,7 @@
             <UAlert v-if="endError" color="error" variant="soft" :title="endError" icon="heroicons:exclamation-circle-20-solid" />
             <div class="flex gap-3">
               <UButton type="submit" color="error" :loading="ending">Konfirmasi Akhiri Sewa</UButton>
-              <UButton color="gray" variant="outline" @click="showEndForm = false">Batal</UButton>
+              <UButton color="gray" variant="outline" class="text-gray-600 dark:text-gray-300" @click="showEndForm = false">Batal</UButton>
             </div>
           </form>
         </template>

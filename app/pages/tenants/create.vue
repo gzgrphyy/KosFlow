@@ -41,7 +41,7 @@
           <UButton type="submit" :loading="loading" color="primary">
             {{ loading ? 'Menyimpan...' : 'Simpan' }}
           </UButton>
-          <UButton to="/tenants" color="gray" variant="outline">Batal</UButton>
+          <UButton to="/tenants" color="gray" variant="outline" class="text-gray-600 dark:text-gray-300">Batal</UButton>
         </div>
       </form>
     </UCard>

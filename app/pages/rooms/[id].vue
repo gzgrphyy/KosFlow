@@ -36,7 +36,7 @@
             {{ deleting ? 'Menghapus...' : 'Hapus kamar ini' }}
           </UButton>
           <div class="flex gap-3">
-            <UButton to="/rooms" color="gray" variant="outline">Batal</UButton>
+            <UButton to="/rooms" color="gray" variant="outline" class="text-gray-600 dark:text-gray-300">Batal</UButton>
             <UButton type="submit" :loading="saving" color="primary">
               {{ saving ? 'Menyimpan...' : 'Simpan' }}
             </UButton>
