@@ -177,7 +177,8 @@ const totalRooms = 12
 const availableCount = 4
 const startingPrice = 'Rp 800RB'
 
-const { data: rooms } = await useFetch('/api/rooms/available', {
+// Fetch kamar tersedia — tanpa await agar client-side navigation tidak terblokir
+const { data: rooms } = useFetch('/api/rooms/available', {
   transform: (data) => data || [],
 })
 

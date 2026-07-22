@@ -80,7 +80,8 @@ const priceFilters = [
   { label: '> Rp 2 Juta', value: 'over2' },
 ]
 
-const { data: rooms, status, refresh } = await useFetch('/api/rooms/available', {
+// Fetch kamar — tanpa await agar client-side navigation tidak terblokir
+const { data: rooms, status, refresh } = useFetch('/api/rooms/available', {
   transform: (data) => data || [],
 })
 
