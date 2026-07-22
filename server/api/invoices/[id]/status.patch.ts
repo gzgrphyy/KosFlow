@@ -2,7 +2,7 @@
 import { z } from 'zod'
 
 const updateStatusSchema = z.object({
-    status: z.enum(['BELUM_LUNAS', 'LUNAS', 'TELAT']),
+    status: z.enum(['BELUM_LUNAS', 'SEBAGIAN', 'LUNAS', 'TELAT']),
 })
 
 export default defineEventHandler(async (event) => {
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     if (!parsed.success) {
         throw createError({
             statusCode: 400,
-            statusMessage: 'Status tidak valid. Pilihan: BELUM_LUNAS, LUNAS, TELAT',
+            statusMessage: 'Status tidak valid. Pilihan: BELUM_LUNAS, SEBAGIAN, LUNAS, TELAT',
         })
     }
 

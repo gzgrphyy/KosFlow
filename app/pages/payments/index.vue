@@ -359,8 +359,8 @@
               </div>
             </section>
 
-            <!-- Refund Action -->
-            <div v-if="detail.status === 'VERIFIED'">
+            <!-- Refund Action (hanya muncul jika sudah ada riwayat refund pada pembayaran ini) -->
+            <div v-if="detail.status === 'VERIFIED' && detail.refundedAmount > 0">
               <section>
                 <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Refund / Kembalian</h3>
                 <div class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 space-y-4">
@@ -730,6 +730,8 @@ const maxRefundableDrawer = computed(() => {
   const alreadyRefunded = Number(detail.value.refundedAmount || 0)
   return amount - alreadyRefunded
 })
+
+
 
 async function handleRefundFromDrawer() {
   if (!detail.value) return

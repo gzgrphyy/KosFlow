@@ -23,14 +23,19 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">Kamar {{ invoice?.room?.roomNumber }}</p>
           </div>
           <div class="flex items-center gap-2">
-            <UTooltip v-if="invoice?.status !== 'LUNAS' && remainingAmount > 0" text="Kirim Reminder WhatsApp" :delay-duration="300">
-              <UButton icon="lucide:message-circle" color="emerald" variant="soft" size="sm" @click="sendWaReminder">
+            <UTooltip v-if="computedStatus !== 'LUNAS' && remainingAmount > 0" text="Kirim Reminder WhatsApp" :delay-duration="300">
+              <UButton icon="lucide:message-circle" color="emerald" variant="soft" size="sm" class="dark:text-emerald-300" @click="sendWaReminder">
                 Kirim Reminder
               </UButton>
             </UTooltip>
-            <UBadge :color="statusColor(invoice?.status)" variant="subtle" size="lg">
-              {{ statusLabel(invoice?.status) }}
-            </UBadge>
+            <div class="flex items-center gap-2">
+              <UBadge :color="statusColor(computedStatus)" variant="subtle" size="lg">
+                {{ statusLabel(computedStatus) }}
+              </UBadge>
+              <UTooltip v-if="computedStatus !== invoice?.status && invoice?.status !== 'TELAT'" text="Status di database tidak sinkron. Gunakan override manual untuk memperbaiki." :delay-duration="300">
+                <Icon name="heroicons:exclamation-triangle-20-solid" class="w-4 h-4 text-amber-500" />
+              </UTooltip>
+            </div>
           </div>
         </div>
 
@@ -107,14 +112,14 @@
         </UAlert>
 
         <!-- Catat Pembayaran Button -->
-        <div v-if="invoice?.status !== 'LUNAS'" class="mt-5">
+        <div v-if="computedStatus !== 'LUNAS'" class="mt-5">
           <UButton color="primary" variant="solid" size="md" @click="paymentPanelOpen = true" class="w-full">
             <Icon name="heroicons:plus-20-solid" class="w-4 h-4" />
             Catat Pembayaran
           </UButton>
         </div>
         <div v-else class="mt-5">
-          <UButton color="green" variant="soft" size="md" disabled class="w-full">
+          <UButton color="green" variant="soft" size="md" disabled class="w-full dark:text-green-300">
             <Icon name="heroicons:check-circle-20-solid" class="w-4 h-4" />
             Tagihan Lunas
           </UButton>
@@ -182,7 +187,7 @@
               <p v-if="p.refundNote" class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ p.refundNote }}</p>
             </div>
             <div v-if="canRefundPayment(p)" class="mt-3 border-t border-gray-100 dark:border-gray-800 pt-2">
-              <UButton color="orange" variant="soft" size="xs" @click="openRefundModal(p)">
+              <UButton color="orange" variant="soft" size="xs" class="dark:text-orange-300" @click="openRefundModal(p)">
                 <Icon name="heroicons:arrow-uturn-left-20-solid" class="w-3.5 h-3.5" />
                 Tandai Sudah Dikembalikan
               </UButton>
@@ -370,7 +375,7 @@ async function handleUpdateStatus() {
 
 function sendWaReminder() {
   if (!invoice.value) return
-  const { tenant, room, period, dueDate, total, status, payments } = invoice.value
+  const { tenant, room, period, dueDate, total, status: dbStatus, payments } = invoice.value
   if (!tenant?.phone) {
     alert('Nomor WA penyewa tidak tersedia')
     return
@@ -380,8 +385,8 @@ function sendWaReminder() {
   const totalPaidAmount = verifiedPayments.reduce((s, p) => s + Number(p.amount), 0)
   const totalRefundedAmount = verifiedPayments.reduce((s, p) => s + Number(p.refundedAmount || 0), 0)
 
-  const daysOverdue = status === 'TELAT' ? calcDaysOverdue(dueDate) : undefined
-  const remainingAmount = status === 'SEBAGIAN'
+  const daysOverdue = dbStatus === 'TELAT' ? calcDaysOverdue(dueDate) : undefined
+  const remainingAmount = computedStatus.value === 'SEBAGIAN'
     ? Math.max(0, total - totalPaidAmount + totalRefundedAmount)
     : undefined
 
@@ -391,7 +396,7 @@ function sendWaReminder() {
     period,
     dueDate,
     total,
-    status,
+    status: computedStatus.value,
     paidAmount: totalPaidAmount > 0 ? totalPaidAmount : undefined,
     remainingAmount,
     daysOverdue,
@@ -428,6 +433,17 @@ const overpaymentAmount = computed(() =>
 const remainingAmount = computed(() =>
   Math.max(0, (invoice.value?.total || 0) - totalPaid.value + totalRefunded.value)
 )
+
+const computedStatus = computed(() => {
+  if (!invoice.value) return 'BELUM_LUNAS'
+  // Respect manual override for TELAT
+  if (invoice.value.status === 'TELAT') return 'TELAT'
+  // Compute from actual payment data
+  const netPaid = totalPaid.value - totalRefunded.value
+  if (netPaid >= invoice.value.total) return 'LUNAS'
+  if (netPaid > 0) return 'SEBAGIAN'
+  return 'BELUM_LUNAS'
+})
 
 function statusLabel(s) {
   return { BELUM_LUNAS: 'Belum Lunas', SEBAGIAN: 'Sebagian', LUNAS: 'Lunas', TELAT: 'Telat' }[s] || s
@@ -534,6 +550,7 @@ const maxRefundable = computed(() => {
 
 function canRefundPayment(p) {
   if (p.status !== 'VERIFIED') return false
+  if (overpaymentAmount.value <= 0) return false
   const alreadyRefunded = Number(p.refundedAmount || 0)
   return alreadyRefunded < Number(p.amount)
 }
