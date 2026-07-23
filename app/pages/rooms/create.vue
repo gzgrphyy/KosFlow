@@ -17,7 +17,14 @@
         </UFormField>
 
         <UFormField label="Tarif Bulanan (Rp)" name="monthlyRate" required>
-          <UInput v-model.number="monthlyRate" type="number" min="0" placeholder="500000" class="w-full" />
+          <input
+            :value="monthlyRate.displayValue"
+            type="text"
+            inputmode="numeric"
+            placeholder="500.000"
+            class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+            @input="monthlyRate.onInput"
+          />
         </UFormField>
 
         <UFormField label="Status" name="status">
@@ -41,7 +48,7 @@
 definePageMeta({ middleware: 'auth' })
 
 const roomNumber = ref('')
-const monthlyRate = ref(0)
+const monthlyRate = useRupiahInput(0)
 const status = ref('AVAILABLE')
 const error = ref('')
 const loading = ref(false)
@@ -59,7 +66,7 @@ async function handleSubmit() {
       method: 'POST',
       body: {
         roomNumber: roomNumber.value,
-        monthlyRate: monthlyRate.value,
+        monthlyRate: monthlyRate.rawValue,
         status: status.value,
       },
     })

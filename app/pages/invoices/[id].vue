@@ -107,7 +107,7 @@
             <span class="font-semibold">Kelebihan Pembayaran</span>
           </template>
           <template #description>
-            <p class="text-sm">Pembayaran melebihi tagihan sebesar <strong>Rp {{ overpaymentAmount.toLocaleString('id-ID') }}</strong>. Jangan lupa kembalikan kelebihan ini ke penyewa.</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300">Pembayaran melebihi tagihan sebesar <strong class="text-gray-900 dark:text-white">Rp {{ overpaymentAmount.toLocaleString('id-ID') }}</strong>. Jangan lupa kembalikan kelebihan ini ke penyewa.</p>
           </template>
         </UAlert>
 
@@ -210,11 +210,12 @@
           <div class="space-y-5">
             <UFormField label="Jumlah Dibayar" required>
               <input
-                v-model="paymentForm.amount"
+                :value="paymentAmount.displayValue"
                 type="text"
                 inputmode="numeric"
                 placeholder="0"
                 class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+                @input="paymentAmount.onInput"
               />
             </UFormField>
 
@@ -284,11 +285,12 @@
           <div class="space-y-5">
             <UFormField label="Jumlah Dikembalikan" required>
               <input
-                v-model="refundForm.amount"
+                :value="refundAmount.displayValue"
                 type="text"
                 inputmode="numeric"
                 placeholder="0"
                 class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+                @input="refundAmount.onInput"
               />
               <p class="text-xs text-gray-400 mt-1">Maksimal Rp {{ maxRefundable.toLocaleString('id-ID') }}</p>
             </UFormField>
@@ -306,7 +308,7 @@
 
           <div class="flex items-center justify-end gap-3 mt-6">
             <UButton color="gray" variant="ghost" class="text-gray-600 dark:text-gray-300" @click="closeRefundPanel">Batal</UButton>
-            <UButton :loading="submittingRefund" color="orange" @click="handleSubmitRefund">
+            <UButton :loading="submittingRefund" color="orange" class="dark:text-white" @click="handleSubmitRefund">
               {{ submittingRefund ? 'Menyimpan...' : 'Konfirmasi Refund' }}
             </UButton>
           </div>
@@ -472,8 +474,9 @@ const paymentError = ref('')
 
 const todayStr = new Date().toISOString().slice(0, 10)
 
+const paymentAmount = useRupiahInput(0)
+
 const paymentForm = reactive({
-  amount: '',
   method: '',
   paymentDate: todayStr,
   proofFile: null,
@@ -487,7 +490,7 @@ function onFileChange(event) {
 function closePaymentPanel() {
   paymentPanelOpen.value = false
   paymentError.value = ''
-  paymentForm.amount = ''
+  paymentAmount.setValue(0)
   paymentForm.method = ''
   paymentForm.paymentDate = todayStr
   paymentForm.proofFile = null
@@ -496,7 +499,7 @@ function closePaymentPanel() {
 
 async function handleSubmitPayment() {
   paymentError.value = ''
-  const amountNum = Number(paymentForm.amount)
+  const amountNum = paymentAmount.rawValue
   if (!amountNum || amountNum <= 0) {
     paymentError.value = 'Jumlah dibayar harus lebih dari 0'
     return
@@ -510,7 +513,7 @@ async function handleSubmitPayment() {
   try {
     const fd = new FormData()
     fd.append('invoiceId', id)
-    fd.append('amount', paymentForm.amount)
+    fd.append('amount', String(paymentAmount.rawValue))
     fd.append('method', paymentForm.method)
     fd.append('paymentDate', paymentForm.paymentDate)
     if (paymentForm.notes) fd.append('notes', paymentForm.notes)
@@ -536,8 +539,9 @@ const submittingRefund = ref(false)
 const refundError = ref('')
 const refundTarget = ref(null)
 
+const refundAmount = useRupiahInput(0)
+
 const refundForm = reactive({
-  amount: '',
   notes: '',
 })
 
@@ -557,7 +561,7 @@ function canRefundPayment(p) {
 
 function openRefundModal(p) {
   refundTarget.value = p
-  refundForm.amount = String(overpaymentAmount.value > 0 ? Math.min(overpaymentAmount.value, maxRefundable.value) : maxRefundable.value)
+  refundAmount.setValue(overpaymentAmount.value > 0 ? Math.min(overpaymentAmount.value, maxRefundable.value) : maxRefundable.value)
   refundForm.notes = ''
   refundError.value = ''
   refundPanelOpen.value = true
@@ -566,14 +570,14 @@ function openRefundModal(p) {
 function closeRefundPanel() {
   refundPanelOpen.value = false
   refundTarget.value = null
-  refundForm.amount = ''
+  refundAmount.setValue(0)
   refundForm.notes = ''
   refundError.value = ''
 }
 
 async function handleSubmitRefund() {
   refundError.value = ''
-  const amountNum = Number(refundForm.amount)
+  const amountNum = refundAmount.rawValue
   if (!amountNum || amountNum <= 0) {
     refundError.value = 'Jumlah refund harus lebih dari 0'
     return

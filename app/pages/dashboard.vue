@@ -38,25 +38,34 @@
       <!-- Row 2: Ringkasan + Tagihan -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <UCard>
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold text-gray-900 dark:text-white">Ringkasan Kamar</h2>
-            <UBadge :color="occupancyPct >= 80 ? 'orange' : occupancyPct >= 50 ? 'yellow' : 'green'" variant="subtle" :class="badgeDarkClass">
-              {{ occupancyPct }}% terisi
-            </UBadge>
-          </div>
-          <UProgress :value="occupancyPct" size="lg" :color="occupancyPct >= 80 ? 'orange' : 'blue'" />
-          <div class="grid grid-cols-3 gap-4 mt-4 text-center">
+          <h2 class="font-semibold text-gray-900 dark:text-white mb-4">Ringkasan Kamar</h2>
+          <div class="space-y-2">
             <div>
-              <p class="text-lg font-bold text-green-600 dark:text-green-400">{{ stats.availableRooms }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Tersedia</p>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600 dark:text-gray-400">Tersedia</span>
+                <span class="font-semibold text-green-600 dark:text-green-400">{{ stats.availableRooms }}</span>
+              </div>
+              <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-green-500 transition-all" :style="{ width: (stats.totalRooms ? (stats.availableRooms / stats.totalRooms * 100) : 0) + '%' }"></div>
+              </div>
             </div>
             <div>
-              <p class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ stats.occupiedRooms }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Terisi</p>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600 dark:text-gray-400">Terisi</span>
+                <span class="font-semibold text-blue-600 dark:text-blue-400">{{ stats.occupiedRooms }}</span>
+              </div>
+              <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-blue-500 transition-all" :style="{ width: (stats.totalRooms ? (stats.occupiedRooms / stats.totalRooms * 100) : 0) + '%' }"></div>
+              </div>
             </div>
             <div>
-              <p class="text-lg font-bold text-orange-600 dark:text-orange-400">{{ stats.maintenanceRooms }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Perbaikan</p>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600 dark:text-gray-400">Perbaikan</span>
+                <span class="font-semibold text-orange-600 dark:text-orange-400">{{ stats.maintenanceRooms }}</span>
+              </div>
+              <div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-orange-500 transition-all" :style="{ width: (stats.totalRooms ? (stats.maintenanceRooms / stats.totalRooms * 100) : 0) + '%' }"></div>
+              </div>
             </div>
           </div>
         </UCard>
@@ -71,7 +80,7 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">tagihan</p>
           </div>
           <div v-else class="text-sm text-gray-400 dark:text-gray-500 mb-4">Belum ada tagihan bulan ini</div>
-          <div class="space-y-2">
+          <div class="space-y-3">
             <div class="flex justify-between text-sm">
               <span class="text-gray-500 dark:text-gray-400">Total nominal</span>
               <span class="font-semibold text-gray-900 dark:text-white">Rp {{ stats.monthlyTotal.toLocaleString('id-ID') }}</span>
@@ -81,10 +90,16 @@
               <span class="font-semibold text-orange-600 dark:text-orange-400">{{ stats.pendingPayments }}</span>
             </div>
           </div>
-          <UDivider class="my-4" />
-          <NuxtLink to="/invoices/create" class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            <Icon name="heroicons:plus-20-solid" class="w-4 h-4" /> Buat tagihan baru
-          </NuxtLink>
+          <UButton
+            to="/invoices/create"
+            icon="heroicons:plus-20-solid"
+            color="primary"
+            variant="solid"
+            size="sm"
+            class="mt-4 w-full justify-center"
+          >
+            Buat tagihan baru
+          </UButton>
         </UCard>
       </div>
 

@@ -35,7 +35,14 @@
           <div class="space-y-3">
             <div v-for="(item, idx) in form.items" :key="idx" class="flex gap-3 items-start">
               <UInput v-model="item.description" placeholder="Keterangan" class="flex-1" />
-              <UInput v-model.number="item.amount" type="number" min="0" placeholder="Rp" class="w-36" />
+              <input
+                :value="item.amountDisplay"
+                type="text"
+                inputmode="numeric"
+                placeholder="Rp"
+                class="w-36 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+                @input="(e) => onItemAmountInput(idx, e.target.value)"
+              />
               <UButton icon="heroicons:x-mark-20-solid" color="gray" variant="ghost" size="sm" class="text-gray-600 dark:text-gray-300" :disabled="form.items.length === 1" @click="removeItem(idx)" />
             </div>
           </div>
@@ -81,7 +88,7 @@ const form = reactive({
   tenancyId: '',
   period: defaultPeriod,
   dueDate: defaultDue,
-  items: [{ description: 'Sewa Kamar', amount: 0 }],
+  items: [{ description: 'Sewa Kamar', amount: 0, amountDisplay: '' }],
 })
 
 const error = ref('')
@@ -91,11 +98,20 @@ function onTenancyChange() {
   const selected = activeTenancies.value?.find(t => t.id === form.tenancyId)
   if (selected && form.items.length > 0) {
     form.items[0].description = 'Sewa Kamar'
-    form.items[0].amount = Number(selected.room.monthlyRate)
+    const num = Number(selected.room.monthlyRate)
+    form.items[0].amount = num
+    form.items[0].amountDisplay = num > 0 ? rupiahFormatter.format(num) : ''
   }
 }
 
-function addItem() { form.items.push({ description: '', amount: 0 }) }
+function onItemAmountInput(idx, val) {
+  const digits = val.replace(/\D/g, '')
+  const num = Number(digits) || 0
+  form.items[idx].amount = num
+  form.items[idx].amountDisplay = num > 0 ? rupiahFormatter.format(num) : ''
+}
+
+function addItem() { form.items.push({ description: '', amount: 0, amountDisplay: '' }) }
 
 function removeItem(idx) {
   if (form.items.length === 1) return

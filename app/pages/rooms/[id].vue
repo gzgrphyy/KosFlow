@@ -22,7 +22,14 @@
         </UFormField>
 
         <UFormField label="Tarif Bulanan (Rp)" name="monthlyRate" required>
-          <UInput v-model.number="monthlyRate" type="number" min="0" class="w-full" />
+          <input
+            :value="monthlyRate.displayValue"
+            type="text"
+            inputmode="numeric"
+            placeholder="500.000"
+            class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+            @input="monthlyRate.onInput"
+          />
         </UFormField>
 
         <UFormField label="Status" name="status">
@@ -54,7 +61,7 @@ const route = useRoute()
 const id = route.params.id
 
 const roomNumber = ref('')
-const monthlyRate = ref(0)
+const monthlyRate = useRupiahInput(0)
 const status = ref('AVAILABLE')
 const loading = ref(true)
 const error = ref('')
@@ -73,7 +80,7 @@ async function loadRoom() {
   try {
     const room = await $fetch(`/api/rooms/${id}`)
     roomNumber.value = room.roomNumber
-    monthlyRate.value = Number(room.monthlyRate)
+    monthlyRate.setValue(Number(room.monthlyRate))
     status.value = room.status
   } catch (e) {
     error.value = e.data?.statusMessage || 'Gagal memuat data'
@@ -92,7 +99,7 @@ async function handleSubmit() {
       method: 'PUT',
       body: {
         roomNumber: roomNumber.value,
-        monthlyRate: monthlyRate.value,
+        monthlyRate: monthlyRate.rawValue,
         status: status.value,
       },
     })

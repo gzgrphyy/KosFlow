@@ -383,11 +383,12 @@
                     <div>
                       <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Dikembalikan</label>
                       <input
-                        v-model="refundDrawerForm.amount"
+                        :value="refundDrawerAmount.displayValue"
                         type="text"
                         inputmode="numeric"
                         placeholder="0"
                         class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
+                        @input="refundDrawerAmount.onInput"
                       />
                       <p class="text-xs text-gray-400 mt-1">Maksimal Rp {{ maxRefundableDrawer.toLocaleString('id-ID') }}</p>
                     </div>
@@ -745,7 +746,8 @@ async function handleExport() {
 }
 
 // Refund from drawer
-const refundDrawerForm = reactive({ amount: '', notes: '' })
+const refundDrawerAmount = useRupiahInput(0)
+const refundDrawerForm = reactive({ notes: '' })
 const refundingDrawer = ref(false)
 const refundDrawerError = ref('')
 
@@ -761,7 +763,7 @@ const maxRefundableDrawer = computed(() => {
 async function handleRefundFromDrawer() {
   if (!detail.value) return
   refundDrawerError.value = ''
-  const amountNum = Number(refundDrawerForm.amount)
+  const amountNum = refundDrawerAmount.rawValue
   if (!amountNum || amountNum <= 0) {
     refundDrawerError.value = 'Jumlah refund harus lebih dari 0'
     return
@@ -777,7 +779,7 @@ async function handleRefundFromDrawer() {
       method: 'POST',
       body: { amount: amountNum, notes: refundDrawerForm.notes || undefined },
     })
-    refundDrawerForm.amount = ''
+    refundDrawerAmount.setValue(0)
     refundDrawerForm.notes = ''
     refundDrawerError.value = ''
     await openDetail(detail.value.id)
