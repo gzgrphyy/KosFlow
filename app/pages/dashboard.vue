@@ -36,7 +36,7 @@
       </div>
 
       <!-- Row 2: Ringkasan + Tagihan -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <UCard>
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-semibold text-gray-900 dark:text-white">Ringkasan Kamar</h2>
@@ -88,6 +88,19 @@
         </UCard>
       </div>
 
+      <!-- Row 2.5: Status Tagihan Bulan Ini -->
+      <UCard class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Status Tagihan Bulan Ini</h2>
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{ currentMonth }}</span>
+        </div>
+        <DashboardInvoiceStatusBreakdownChart
+          :data="breakdownData"
+          :loading="breakdownPending"
+          @bar-click="handleBarClick"
+        />
+      </UCard>
+
       <!-- Row 3: Quick Actions -->
       <UCard class="mb-6">
         <h2 class="font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h2>
@@ -134,6 +147,8 @@ definePageMeta({ middleware: 'auth' })
 const { loggedIn, user } = useUserSession()
 
 const { data: stats, pending, error } = await useFetch('/api/dashboard/stats')
+
+const { data: breakdownData, pending: breakdownPending } = await useFetch('/api/dashboard/invoice-status-breakdown')
 
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const now = new Date()
@@ -186,4 +201,8 @@ const statCards = computed(() => [
     bgColor: 'bg-orange-500',
   },
 ])
+
+function handleBarClick(status) {
+  navigateTo(`/invoices?status=${status}`)
+}
 </script>

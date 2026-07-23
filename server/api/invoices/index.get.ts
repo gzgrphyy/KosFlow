@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const querySchema = z.object({
     period: z.string().regex(/^\d{4}-\d{2}$/, 'Format period harus YYYY-MM').optional(),
-    status: z.enum(['BELUM_LUNAS', 'LUNAS', 'TELAT']).optional(),
+    status: z.enum(['BELUM_LUNAS', 'SEBAGIAN', 'LUNAS', 'TELAT']).optional(),
 })
 
 export default defineEventHandler(async (event) => {

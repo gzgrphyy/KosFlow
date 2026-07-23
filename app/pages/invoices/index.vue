@@ -86,8 +86,15 @@
 <script setup>
 definePageMeta({ middleware: 'auth' })
 
-const filterPeriod = ref('')
-const filterStatus = ref('')
+const route = useRoute()
+const router = useRouter()
+
+const filterPeriod = ref(route.query.period || '')
+const filterStatus = ref(route.query.status || '')
+
+watch(filterStatus, (val) => {
+  router.replace({ query: { ...route.query, status: val || undefined } })
+})
 
 const queryParams = computed(() => {
   const q = {}
@@ -106,6 +113,7 @@ const error = computed(() => fetchStatus.value === 'error' ? 'Gagal memuat data'
 const statusFilters = [
   { label: 'Semua', value: '' },
   { label: 'Belum Lunas', value: 'BELUM_LUNAS' },
+  { label: 'Sebagian', value: 'SEBAGIAN' },
   { label: 'Lunas', value: 'LUNAS' },
   { label: 'Telat', value: 'TELAT' },
 ]
