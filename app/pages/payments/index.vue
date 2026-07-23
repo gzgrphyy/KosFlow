@@ -54,7 +54,6 @@
 
         <USelect v-model="filters.status" :items="statusFilterOptions" class="w-44" />
 
-        <USelect v-model="filters.refundedStatus" :items="refundFilterOptions" class="w-44" />
 
         <USelect v-model="filters.roomId" :items="roomOptions" class="w-32" />
 
@@ -112,7 +111,6 @@
             </th>
             <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metode</th>
             <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Refund</th>
             <th class="text-left px-4 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Verifikator</th>
             <th class="text-right px-3 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
@@ -146,19 +144,6 @@
               <UBadge :color="statusColor(p.status)" variant="subtle" size="sm">
                 {{ statusLabel(p.status) }}
               </UBadge>
-            </td>
-            <td class="px-4 py-4">
-              <div class="flex items-center gap-1.5">
-                <RefundStatusBadge
-                  v-if="p.refundedAmount > 0"
-                  :pending-amount="Math.max(0, Number(p.amount) - Number(p.refundedAmount))"
-                  :refunded-amount="p.refundedAmount"
-                />
-                <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
-                <span v-if="p.refundedAmount > 0" class="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                  (Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }})
-                </span>
-              </div>
             </td>
             <td class="px-4 py-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ p.verifiedBy?.name || '—' }}</span>
@@ -263,21 +248,6 @@
                 <div v-if="detail.referenceNo" class="flex justify-between">
                   <span class="text-sm text-gray-500 dark:text-gray-400">No. Referensi</span>
                   <span class="text-sm font-mono font-medium text-gray-900 dark:text-white">{{ detail.referenceNo }}</span>
-                </div>
-                <div v-if="detail.refundedAmount > 0" class="border-t border-gray-100 dark:border-gray-800 pt-3 mt-3">
-                  <div class="flex justify-between">
-                    <span class="text-sm text-red-600 dark:text-red-400 font-medium">Sudah Dikembalikan</span>
-                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">Rp {{ Number(detail.refundedAmount).toLocaleString('id-ID') }}</span>
-                  </div>
-                  <div v-if="detail.refundedBy" class="flex justify-between mt-1">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Oleh</span>
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ detail.refundedBy.name }}</span>
-                  </div>
-                  <div v-if="detail.refundedAt" class="flex justify-between mt-1">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Tanggal Refund</span>
-                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(detail.refundedAt) }}</span>
-                  </div>
-                  <p v-if="detail.refundNote" class="text-sm text-gray-500 dark:text-gray-400 mt-2">{{ detail.refundNote }}</p>
                 </div>
               </div>
             </section>
@@ -411,7 +381,6 @@ const filters = reactive({
   period: '',
   method: null,
   status: null,
-  refundedStatus: null,
   roomId: null,
 })
 
@@ -431,7 +400,6 @@ const queryParams = computed(() => {
   if (filters.period) q.period = filters.period
   if (filters.method) q.method = filters.method
   if (filters.status) q.status = filters.status
-  if (filters.refundedStatus) q.refundedStatus = filters.refundedStatus
   if (filters.roomId) q.roomId = filters.roomId
   return q
 })
@@ -508,12 +476,6 @@ const statusFilterOptions = [
   { label: 'Terverifikasi', value: 'VERIFIED' },
   { label: 'Menunggu', value: 'PENDING' },
   { label: 'Ditolak', value: 'REJECTED' },
-]
-
-const refundFilterOptions = [
-  { label: 'Semua Status Refund', value: null },
-  { label: 'Sudah Dikembalikan', value: 'refunded' },
-  { label: 'Belum Dikembalikan', value: 'not_refunded' },
 ]
 
 const rooms = ref([])
