@@ -93,6 +93,18 @@
               Rp {{ remainingAmount.toLocaleString('id-ID') }}
             </span>
           </div>
+
+          <!-- Refund Status -->
+          <div v-if="overpaymentAmount > 0 || totalRefunded > 0" class="border-t border-gray-100 dark:border-gray-800 pt-3 mt-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-500 dark:text-gray-400">Status Kembalian</span>
+              <RefundStatusBadge :pending-amount="overpaymentAmount" :refunded-amount="totalRefunded" />
+            </div>
+            <p v-if="overpaymentAmount > 0" class="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+              <Icon name="heroicons:information-circle-16-solid" class="w-3.5 h-3.5 inline-block -mt-0.5 mr-0.5" />
+              Perlu dikembalikan Rp {{ overpaymentAmount.toLocaleString('id-ID') }} ke penyewa
+            </p>
+          </div>
         </div>
 
         <!-- Overpayment Alert -->

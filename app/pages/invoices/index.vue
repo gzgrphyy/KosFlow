@@ -37,7 +37,7 @@
         <USkeleton v-for="i in 4" :key="i" class="h-12 w-full" />
       </div>
       <div v-else-if="error" class="text-red-500 text-sm text-center py-8">{{ error }}</div>
-      <div v-else-if="invoices.length === 0" class="text-center py-12">
+      <div v-else-if="invoices?.length === 0" class="text-center py-12">
         <Icon name="heroicons:currency-dollar-20-solid" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
         <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada tagihan ditemukan</p>
       </div>
@@ -51,6 +51,7 @@
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Jatuh Tempo</th>
             <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
             <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Refund</th>
             <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
           </tr>
         </thead>
@@ -67,6 +68,9 @@
               <UBadge :color="statusColor(inv.status)" variant="subtle" size="sm">
                 {{ statusLabel(inv.status) }}
               </UBadge>
+            </td>
+            <td class="px-6 py-4">
+              <RefundStatusBadge :pending-amount="inv.pendingRefundAmount" :refunded-amount="inv.totalRefunded" />
             </td>
             <td class="px-6 py-4 text-right">
               <div class="flex items-center justify-end gap-1">

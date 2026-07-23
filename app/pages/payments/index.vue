@@ -148,10 +148,17 @@
               </UBadge>
             </td>
             <td class="px-4 py-4">
-              <span v-if="p.refundedAmount > 0" class="text-xs text-red-600 dark:text-red-400 font-medium">
-                Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }}
-              </span>
-              <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
+              <div class="flex items-center gap-1.5">
+                <RefundStatusBadge
+                  v-if="p.refundedAmount > 0"
+                  :pending-amount="Math.max(0, Number(p.amount) - Number(p.refundedAmount))"
+                  :refunded-amount="p.refundedAmount"
+                />
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
+                <span v-if="p.refundedAmount > 0" class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  (Rp {{ Number(p.refundedAmount).toLocaleString('id-ID') }})
+                </span>
+              </div>
             </td>
             <td class="px-4 py-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">{{ p.verifiedBy?.name || '—' }}</span>

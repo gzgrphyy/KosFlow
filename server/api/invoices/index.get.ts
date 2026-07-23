@@ -32,18 +32,25 @@ export default defineEventHandler(async (event) => {
         },
     })
 
-    return invoices.map(inv => ({
-        id: inv.id,
-        period: inv.period,
-        dueDate: inv.dueDate,
-        status: inv.status,
-        createdAt: inv.createdAt,
-        tenant: inv.tenancy.tenant,
-        room: inv.tenancy.room,
-        tenancyId: inv.tenancyId,
-        items: inv.items.map(item => ({ ...item, amount: Number(item.amount) })),
-        total: inv.items.reduce((sum, item) => sum + Number(item.amount), 0),
-        totalPaid: inv.payments.reduce((sum, p) => sum + Number(p.amount), 0),
-        totalRefunded: inv.payments.reduce((sum, p) => sum + Number(p.refundedAmount ?? 0), 0),
-    }))
+    return invoices.map(inv => {
+        const total = inv.items.reduce((sum, item) => sum + Number(item.amount), 0)
+        const totalPaid = inv.payments.reduce((sum, p) => sum + Number(p.amount), 0)
+        const totalRefunded = inv.payments.reduce((sum, p) => sum + Number(p.refundedAmount ?? 0), 0)
+
+        return {
+            id: inv.id,
+            period: inv.period,
+            dueDate: inv.dueDate,
+            status: inv.status,
+            createdAt: inv.createdAt,
+            tenant: inv.tenancy.tenant,
+            room: inv.tenancy.room,
+            tenancyId: inv.tenancyId,
+            items: inv.items.map(item => ({ ...item, amount: Number(item.amount) })),
+            total,
+            totalPaid,
+            totalRefunded,
+            pendingRefundAmount: Math.max(0, totalPaid - total - totalRefunded),
+        }
+    })
 })
