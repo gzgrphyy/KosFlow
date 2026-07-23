@@ -368,48 +368,7 @@
               </div>
             </section>
 
-            <!-- Refund Action (hanya muncul jika sudah ada riwayat refund pada pembayaran ini) -->
-            <div v-if="detail.status === 'VERIFIED' && detail.refundedAmount > 0">
-              <section>
-                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Refund / Kembalian</h3>
-                <div class="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 space-y-4">
-                  <div v-if="Number(detail.refundedAmount || 0) >= Number(detail.amount)" class="text-sm text-green-600 dark:text-green-400">
-                    Seluruh pembayaran sudah dikembalikan.
-                  </div>
-                  <template v-else>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      Pembayaran ini memiliki sisa yang bisa dikembalikan.
-                    </p>
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Dikembalikan</label>
-                      <input
-                        :value="refundDrawerAmount.displayValue"
-                        type="text"
-                        inputmode="numeric"
-                        placeholder="0"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none"
-                        @input="refundDrawerAmount.onInput"
-                      />
-                      <p class="text-xs text-gray-400 mt-1">Maksimal Rp {{ maxRefundableDrawer.toLocaleString('id-ID') }}</p>
-                    </div>
-                    <div>
-                      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
-                      <textarea
-                        v-model="refundDrawerForm.notes"
-                        placeholder="Keterangan refund..."
-                        maxlength="500"
-                        rows="3"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm outline-none resize-none"
-                      ></textarea>
-                    </div>
-                    <UButton :loading="refundingDrawer" color="orange" class="w-full" @click="handleRefundFromDrawer">
-                      {{ refundingDrawer ? 'Menyimpan...' : 'Tandai Sudah Dikembalikan' }}
-                    </UButton>
-                    <UAlert v-if="refundDrawerError" color="error" variant="soft" :title="refundDrawerError" icon="lucide:alert-circle" />
-                  </template>
-                </div>
-              </section>
-            </div>
+
 
             <!-- Additional Notes -->
             <section v-if="detail.notes && !detail.verifiedBy">
@@ -745,51 +704,7 @@ async function handleExport() {
   }
 }
 
-// Refund from drawer
-const refundDrawerAmount = useRupiahInput(0)
-const refundDrawerForm = reactive({ notes: '' })
-const refundingDrawer = ref(false)
-const refundDrawerError = ref('')
 
-const maxRefundableDrawer = computed(() => {
-  if (!detail.value) return 0
-  const amount = Number(detail.value.amount)
-  const alreadyRefunded = Number(detail.value.refundedAmount || 0)
-  return amount - alreadyRefunded
-})
-
-
-
-async function handleRefundFromDrawer() {
-  if (!detail.value) return
-  refundDrawerError.value = ''
-  const amountNum = refundDrawerAmount.rawValue
-  if (!amountNum || amountNum <= 0) {
-    refundDrawerError.value = 'Jumlah refund harus lebih dari 0'
-    return
-  }
-  if (amountNum > maxRefundableDrawer.value) {
-    refundDrawerError.value = `Jumlah refund tidak boleh melebihi Rp ${maxRefundableDrawer.value.toLocaleString('id-ID')}`
-    return
-  }
-
-  refundingDrawer.value = true
-  try {
-    await $fetch(`/api/payments/${detail.value.id}/refund`, {
-      method: 'POST',
-      body: { amount: amountNum, notes: refundDrawerForm.notes || undefined },
-    })
-    refundDrawerAmount.setValue(0)
-    refundDrawerForm.notes = ''
-    refundDrawerError.value = ''
-    await openDetail(detail.value.id)
-    refresh()
-  } catch (e) {
-    refundDrawerError.value = e.data?.statusMessage || 'Gagal mencatat refund'
-  } finally {
-    refundingDrawer.value = false
-  }
-}
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'

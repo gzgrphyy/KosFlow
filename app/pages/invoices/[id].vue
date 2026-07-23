@@ -271,8 +271,7 @@
           </div>
 
           <p v-if="paymentError" class="text-sm text-red-600 dark:text-red-400 mt-4">{{ paymentError }}</p>
-        </div>
-      </div>
+        </div>      </div>
 
       <!-- Refund Modal -->
       <div v-if="refundPanelOpen">

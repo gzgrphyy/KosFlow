@@ -31,12 +31,16 @@
       <p class="text-xs text-gray-500 dark:text-gray-400">Belum ada transaksi terverifikasi dalam periode ini.</p>
     </div>
 
-    <div v-else class="relative h-[420px]">
-      <Line
-        :data="chartData"
-        :options="chartOptions"
-        :key="chartKey"
-      />
+    <div v-else class="relative" :style="{ height: visibleHeight + 'px' }">
+      <div class="overflow-y-auto h-full">
+        <div :style="{ height: chartHeight + 'px' }">
+          <Line
+            :data="chartData"
+            :options="chartOptions"
+            :key="chartKey"
+          />
+        </div>
+      </div>
     </div>
   </UCard>
 </template>
@@ -75,6 +79,28 @@ const monthOptions = [
 
 const subtitle = computed(() => {
   return `${props.months} bulan terakhir — berdasarkan tanggal transaksi diverifikasi`
+})
+
+const maxNetValue = computed(() => {
+  if (!props.data || props.data.length === 0) return 0
+  return Math.max(...props.data.map((d) => d.net))
+})
+
+const BASE_HEIGHT = 420
+const MAX_VISIBLE_HEIGHT = 600
+const MAX_CHART_HEIGHT = 800
+
+const chartHeight = computed(() => {
+  const maxVal = maxNetValue.value
+  if (maxVal <= 0) return BASE_HEIGHT
+  // Tambah tinggi chart proporsional dengan nilai maksimum
+  // Setiap Rp 50jt tambah 80px tinggi
+  const extraPer50jt = Math.floor(maxVal / 50_000_000) * 80
+  return Math.min(BASE_HEIGHT + extraPer50jt, MAX_CHART_HEIGHT)
+})
+
+const visibleHeight = computed(() => {
+  return Math.min(chartHeight.value, MAX_VISIBLE_HEIGHT)
 })
 
 function formatMonthLabel(monthStr) {
